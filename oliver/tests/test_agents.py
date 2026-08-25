@@ -9,6 +9,7 @@ from utils.agents.coach import AgentContractError, CoachAgent, render_coach_resp
 from utils.models import ApproachGuidance, AssessmentReport, CoachingItem, NextStep, OliverResponse, Opportunity, PathForward
 from utils.postgres import EmailThreadDb
 from utils.scoring import DIStage, assess_email
+from utils.tools.tool_schema import SEARCH_RELATED_IDEAS_TOOL_NAME
 from utils.transition_policy import ReportDepth
 
 
@@ -196,6 +197,51 @@ class CoachContractTests(unittest.TestCase):
         self.assertIsNotNone(responses.request)
         assert responses.request is not None
         self.assertNotIn("tools", responses.request)
+
+    def test_attached_function_tool_uses_responses_schema(self) -> None:
+        response = OliverResponse(
+            action="SEND_EMAIL",
+            reply_kind="message",
+            subject="Re: Question",
+            content_html="<p>Here is the answer.</p>",
+        )
+
+        class FakeResponses:
+            request: dict[str, object] | None = None
+
+            def create(self, **kwargs: object) -> SimpleNamespace:
+                self.request = kwargs
+                return SimpleNamespace(
+                    usage=None,
+                    output=[SimpleNamespace(type="message", content=[SimpleNamespace(text=response.model_dump_json())])],
+                )
+
+        responses = FakeResponses()
+        agent = CoachAgent(
+            client=SimpleNamespace(responses=responses),  # type: ignore[arg-type]
+            model="provider/model",
+            reasoning_effort="high",
+            embedding_model="openai/embedding-model",
+            embedding_dimensions=1536,
+            max_tool_rounds=2,
+        )
+
+        agent.respond(
+            database=object(),  # type: ignore[arg-type]
+            current_thread=EmailThreadDb(conversation_id="conversation-1"),
+            email_thread="<email>Question</email>",
+            canonical_context=None,
+        )
+
+        self.assertIsNotNone(responses.request)
+        assert responses.request is not None
+        tools = responses.request["tools"]
+        assert isinstance(tools, list)
+        function_tool = next(tool for tool in tools if tool["type"] == "function")
+        self.assertEqual(function_tool["name"], SEARCH_RELATED_IDEAS_TOOL_NAME)
+        self.assertNotIn("function", function_tool)
+        self.assertEqual(function_tool["parameters"]["type"], "object")
+        self.assertTrue(function_tool["strict"])
 
     def test_assessment_reply_without_canonical_result_is_rejected(self) -> None:
         response = OliverResponse(action="SEND_EMAIL", reply_kind="assessment", subject="Assessment", report=_assessment_report())

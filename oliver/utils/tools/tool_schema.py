@@ -2,9 +2,7 @@
 
 from typing import List, Union
 
-from openai import pydantic_function_tool
-from openai.types.chat import ChatCompletionFunctionToolParam
-from openai.types.responses import WebSearchToolParam
+from openai.types.responses import FunctionToolParam, WebSearchToolParam
 from pydantic import BaseModel, ConfigDict, Field
 
 SEARCH_RELATED_IDEAS_TOOL_NAME = "search_related_ideas"
@@ -26,17 +24,19 @@ class SearchRelatedIdeasInput(BaseModel):
 
 AZURE_WEB_SEARCH_TOOL: WebSearchToolParam = {"type": "web_search"}
 
-SEARCH_RELATED_IDEAS_TOOL: ChatCompletionFunctionToolParam = pydantic_function_tool(
-    SearchRelatedIdeasInput,
-    name=SEARCH_RELATED_IDEAS_TOOL_NAME,
-    description=(
+SEARCH_RELATED_IDEAS_TOOL: FunctionToolParam = {
+    "type": "function",
+    "name": SEARCH_RELATED_IDEAS_TOOL_NAME,
+    "description": (
         "Search participant-authored Oliver email conversations for semantically related internal AI initiatives. "
         "Use a complete, standalone query containing enough context to match related problems, capabilities, users, and technologies. "
         "Use this when an initiative assessment or coordination reply could benefit from similar work or relevant contacts."
     ),
-)
+    "parameters": SearchRelatedIdeasInput.model_json_schema(),
+    "strict": True,
+}
 
-ToolSchema = Union[WebSearchToolParam, ChatCompletionFunctionToolParam]
+ToolSchema = Union[WebSearchToolParam, FunctionToolParam]
 
 TOOL_SCHEMAS: List[ToolSchema] = [
     AZURE_WEB_SEARCH_TOOL,
