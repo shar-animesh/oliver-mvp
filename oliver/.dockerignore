@@ -1,7 +1,10 @@
 .venv/
 .ruff_cache/
 dist/
+.env
+.data/
 infra/
 temp.ipynb
 __pycache__/
 *.pyc
+tests/

@@ -5,9 +5,6 @@
     "$connections": {
       "defaultValue": {},
       "type": "Object"
-    },
-    "internalApiKey": {
-      "type": "SecureString"
     }
   },
   "triggers": {
@@ -25,8 +22,16 @@
         "queries": {
           "folderId": "Inbox",
           "importance": "Any",
-          "includeAttachments": false,
+          "includeAttachments": true,
           "mailboxAddress": "${mailbox_address}"
+        }
+      },
+      "runtimeConfiguration": {
+        "secureData": {
+          "properties": [
+            "inputs",
+            "outputs"
+          ]
         }
       }
     }
@@ -47,13 +52,42 @@
         ]
       },
       "actions": {
+        "Normalize_attachments": {
+          "type": "Select",
+          "inputs": {
+            "from": "@coalesce(triggerBody()?['attachments'], json('[]'))",
+            "select": {
+              "attachment_id": "@coalesce(item()?['id'], item()?['name'])",
+              "file_name": "@item()?['name']",
+              "content_type": "@coalesce(item()?['contentType'], 'application/octet-stream')",
+              "content_base64": "@item()?['contentBytes']"
+            }
+          },
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "inputs",
+                "outputs"
+              ]
+            }
+          }
+        },
         "Call_Oliver_API": {
           "type": "Http",
+          "runAfter": {
+            "Normalize_attachments": [
+              "Succeeded"
+            ]
+          },
           "inputs": {
             "method": "POST",
             "uri": "${oliver_api_url}",
+            "authentication": {
+              "type": "ManagedServiceIdentity",
+              "audience": "${oliver_api_audience}",
+              "identity": "${workflow_identity_id}"
+            },
             "headers": {
-              "X-Internal-Api-Key": "@parameters('internalApiKey')",
               "Content-Type": "application/json"
             },
             "body": {
@@ -63,7 +97,8 @@
               "sender_email": "@triggerBody()?['from']",
               "recipient_emails": "@string(triggerBody()?['toRecipients'])",
               "received_at": "@triggerBody()?['receivedDateTime']",
-              "email_thread": "@triggerBody()?['body']"
+              "email_thread": "@triggerBody()?['body']",
+              "attachments": "@body('Normalize_attachments')"
             }
           },
           "runtimeConfiguration": {
@@ -103,12 +138,67 @@
                 },
                 "method": "post",
                 "path": "/v3/Mail/ReplyTo",
+                "retryPolicy": {
+                  "type": "none"
+                },
                 "body": {
                   "Body": "@body('Call_Oliver_API')?['email_html']",
                   "mailboxAddress": "${mailbox_address}",
                   "messageId": "@triggerBody()?['id']",
                   "ReplyAll": false,
                   "Subject": "@body('Call_Oliver_API')?['subject']"
+                }
+              }
+            },
+            "Report_delivery_sent": {
+              "type": "Http",
+              "runAfter": {
+                "Reply_to_original_email": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "method": "POST",
+                "uri": "@concat('${oliver_api_base_url}/deliveries/', body('Call_Oliver_API')?['delivery_id'], '/result')",
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "${oliver_api_audience}",
+                  "identity": "${workflow_identity_id}"
+                },
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "body": {
+                  "idempotency_key": "@concat(workflow()?['run']?['name'], ':', body('Call_Oliver_API')?['delivery_id'], ':sent')",
+                  "outcome": "SENT",
+                  "occurred_at": "@utcNow()"
+                }
+              }
+            },
+            "Report_delivery_failed": {
+              "type": "Http",
+              "runAfter": {
+                "Reply_to_original_email": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              },
+              "inputs": {
+                "method": "POST",
+                "uri": "@concat('${oliver_api_base_url}/deliveries/', body('Call_Oliver_API')?['delivery_id'], '/result')",
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "${oliver_api_audience}",
+                  "identity": "${workflow_identity_id}"
+                },
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "body": {
+                  "idempotency_key": "@concat(workflow()?['run']?['name'], ':', body('Call_Oliver_API')?['delivery_id'], ':failed')",
+                  "outcome": "FAILED",
+                  "occurred_at": "@utcNow()",
+                  "error": "@coalesce(actions('Reply_to_original_email')?['error']?['message'], 'Office 365 reply action failed')"
                 }
               }
             }

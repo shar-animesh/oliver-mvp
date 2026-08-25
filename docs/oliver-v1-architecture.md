@@ -1,83 +1,86 @@
-# Oliver v1 architecture and agent inventory
+# Oliver architecture and runtime responsibilities
 
-This note describes the code that currently exists in root `oliver-v1`. It distinguishes executable assessment agents from orchestration roles and future deployment seams.
+This document describes the implementation under `oliver/`. The transition-readiness design decision is recorded in [ADR 0003](adr/0003-transition-readiness-policy.md), and the evidence-quality contract is recorded in [ADR 0004](adr/0004-assessment-evidence-quality-contract.md).
 
-## Executable assessment agents
+## Architectural rule
 
-All five agents receive the same immutable `AgentContext`, which currently contains only a `SubmissionCreate`. Each returns the shared `AgentResult` contract with a score, confidence, typed evidence, gaps, reasoning/provenance, and its owned dimension.
-
-| Agent | Owned dimension | Current deterministic responsibility |
-|---|---|---|
-| DocGuard | `ideaCompleteness` | Checks whether the problem, approach, value, data, sponsor, team, and supporting context are present and substantive. Its score also controls the completeness pre-gate. |
-| IdeaPulse | `ideaQuality` | Evaluates problem specificity, quantified impact, consequence, stakeholders, approach fit, and depth. |
-| ValuePulse | `strategicValue` | Evaluates explicit and quantified value, efficiency, scale, substance, and baseline evidence. |
-| TechScope | `technicalFeasibility` | Evaluates technical approach, data availability, integration surface, and supporting technical context. |
-| PathFinder | `executionReadiness` | Evaluates sponsor ownership, team capacity, pilot scope, and execution planning. |
-
-The single `_EVALUATOR_REGISTRY` in `mock_assessor.py` binds agent name, dimension, label, and deterministic evaluator. It builds both the default rubric agents and the optional LLM agents, so ordering is not a correctness requirement; consolidation indexes results by dimension.
-
-## How one assessment runs
+Oliver separates model reasoning from authoritative lifecycle control:
 
 ```text
-SubmissionCreate
-      │
-      ▼
-resolve_agents()
-      │
-      ├─ default: five deterministic rubric agents
-      └─ OLIVER_AGENTS=llm + provider: five LLM agents
-                            (per-agent deterministic fallback)
-      │
-      ▼
-asyncio.gather() fan-out
-      │
-      ▼
-five AgentResult records with typed evidence
-      │
-      ▼
-consolidate()
-      ├─ stage-specific weights
-      ├─ completeness floor (30)
-      ├─ composite gate threshold (70)
-      ├─ confidence / human-review routing
-      └─ StageMaster lifecycle assignment
-      │
-      ▼
-IdeaCoach + summary synthesis
-      │
-      ▼
-TemplateNarrator or LLMNarrator
-      │        (grounding guard + template fallback)
-      ▼
-Assessment
+Model reasoning                    Deterministic application control
+------------------------------     ---------------------------------
+Interpret supplied evidence        Persist initiatives and evidence
+Classify criterion evidence        Calculate canonical portfolio score
+Explain and coach                  Apply versioned transition policy
+Find portfolio patterns            Enforce authorization and concurrency
+Discover Scout candidates          Record audit and delivery state
 ```
 
-With `OLIVER_AGENTS=rubric` (the default), all five evaluators are deterministic evidence-presence rubrics. With `OLIVER_AGENTS=llm` and an `OLIVER_LLM_PROVIDER`, each dimension is rendered from the corresponding rubric into a provider-neutral prompt. The response is extracted as JSON and validated into the same contract. A provider error, malformed JSON, validation failure, timeout, or unexpected per-agent exception falls back only that dimension to its deterministic evaluator and marks it `llm-fallback`.
+The model does not assign an official score or move an initiative between DI stages. Numeric score, transition readiness, and lifecycle state are separate outputs.
 
-`consolidate()` is the Canonical Scoring Service boundary. It is pure and does not know whether the inputs came from rubric or LLM agents. The active versioned weight set supplies DI-stage weights. DocGuard below 30 produces `COACHING_REJECT`; otherwise a stage-weighted composite at least 70 passes. Low confidence, a no-go, or an irreversible stage requires human review. StageMaster maps that verdict into the lifecycle state.
+## Inbound assessment flow
 
-After consolidation, IdeaCoach derives gaps and actions, and summary synthesis builds compatibility fields. The narrative layer then produces the submitter-facing explanation. The deterministic `TemplateNarrator` is the default. `LLMNarrator` uses the same provider port when enabled, enforces grounding, and falls back to the template on failure.
+```text
+Logic App or assessment sandbox
+            |
+            v
+Authenticated FastAPI route
+            |
+            v
+Registrar: thread, message, initiative, attachments, evidence version
+            |
+            v
+Assessment Agent: structured evidence and criterion findings
+            |
+            +-----------------------------+
+            |                             |
+            v                             v
+Canonical Scoring Service          Transition Policy Engine
+(portfolio comparison signal)      (stage-specific readiness)
+            |                             |
+            +--------------+--------------+
+                           v
+                Canonical assessment record
+                           |
+                           v
+               Coach Agent and safe renderer
+                           |
+                           v
+                Herald delivery outbox/audit
+```
 
-## Supporting roles already implemented
+For each stage transition, the policy engine evaluates explicit criteria as `SATISFIED`, `CONCERN`, `UNKNOWN`, or `NOT_APPLICABLE`. It produces `ADVANCE`, `CONDITIONAL_ADVANCE`, `HOLD_FOR_EVIDENCE`, `DO_NOT_ADVANCE`, or the terminal `CONTINUE_MONITORING` outcome. A weighted score remains useful for portfolio comparison but is not a stage gate.
 
-- The public `oliver_api` host owns HTTP configuration, CORS, optional auth dependencies, route contracts, and process startup. It delegates domain work to `oliver_core`.
-- Ingest normalizes inbound email, enforces message-id idempotency, persists the assessing record, calls the assessment orchestrator, persists the result, and renders the email response.
-- The store seam supports memory, SQLite, and Cosmos backends.
-- Audit records append-only hash-linked events through memory or JSONL backends and can verify the chain.
-- Herald renders and stores reports, builds an email envelope, calls a delivery adapter, and audits delivery. Log delivery works locally; Microsoft Graph is a deployment adapter stub.
-- Pacer calculates time-in-stage, detects stalls, and advances passing submissions to the next DI gate.
-- Shadow comparison runs rubric and LLM evaluator sets against the same submission without persistence, reporting dimension deltas, fallback dimensions, and gate agreement.
+## Reasoning agents
 
-## Important current boundaries
+- **Assessment Agent** interprets the current message, accumulated initiative evidence, attachment text, stage objective, and transition policy. Its response is schema-validated before use. A deterministic rubric implementation remains available through the same interface.
+- **Coach Agent** converts canonical assessment and transition results into participant-facing communication. The branded email renderer owns official scores and policy results, strips internal criterion identifiers, and sanitizes free-form model HTML.
+- **Portfolio Intelligence Agent** analyzes persisted initiative summaries for cross-portfolio patterns. Reports are stored with an input fingerprint so identical portfolio state is not duplicated.
+- **Scout Agent** proposes candidate initiatives from approved source material. Promotion and dismissal are explicit governed workflows; Scout does not silently create lifecycle decisions.
 
-- Azure AI Foundry is not connected. The only implemented concrete model adapter is Ollama; provider interfaces are ready for another adapter.
-- The five deterministic evaluators, orchestration, canonical scoring, coaching, and summary synthesis remain concentrated in `mock_assessor.py`. The filename understates how much production logic it now contains.
-- The rubric is represented in deterministic code and transcribed into `prompts.py`; keeping those two definitions aligned is manual today.
-- LLM execution is concurrent inside one API process, not yet Durable Functions activity orchestration.
-- Memory stores are process-local. SQLite is suitable for local single-instance durability, while Cosmos still needs live Azure validation.
-- The email idempotency lookup scans submissions and is not an atomic unique insert, so concurrent duplicate delivery remains a production race until the durable store owns a unique message-id constraint.
-- The current human writer identity header is an attribution seam, not verified production identity. Entra/MSAL validation is still required.
-- Microsoft Graph delivery deliberately raises `NotImplementedError`; live delivery is not complete.
-- API startup currently maps validated settings into legacy environment-driven domain factories. A future cleanup can replace that compatibility bridge with explicit dependency injection.
+## Deterministic services
 
-These seams allow the internal files to be rewritten incrementally while preserving `SubmissionCreate → AgentResult → Assessment` and the public `/api/v1` contracts.
+- **Registrar** owns initiative/thread association, immutable evidence versions, attachment provenance, and idempotent inbound storage.
+- **Canonical Scoring Service** calculates versioned dimension scores as portfolio signals.
+- **Transition Policy Engine** owns stage objectives, criterion timing, blocking behavior, gate outcomes, and report depth.
+- **Lifecycle Service / StageMaster responsibility** applies authorized hold, resume, proposal, approval, rejection, and transition operations with optimistic concurrency checks.
+- **Pacer** calculates stage age and creates follow-up events from configured service-level intervals.
+- **Herald** owns the transactional delivery outbox, delivery attempts, retries, and Logic App receipts without duplicating the outbound email body.
+- **Auditor** appends actor, subject, correlation, and policy provenance for material lifecycle events.
+- **Sentinel and Realizer** ingest governed operational measurements, detect deterministic SLO breaches, and compare realized value with approved targets.
+
+## Persistence and privacy
+
+PostgreSQL is the canonical store. Local PostgreSQL is used for development; Azure Database for PostgreSQL Flexible Server is the production target. Alembic owns schema evolution.
+
+Evidence snapshots reference evidence items within the same initiative through composite foreign keys. Related-idea semantic search excludes participant identity, returns bounded participant-authored context, and only searches initiatives explicitly marked `INTERNAL`; initiatives are `PRIVATE` by default.
+
+## Authentication boundaries
+
+Local username/password sessions and internal API keys exist only for development. Production configuration fails closed unless Microsoft Entra validation is enabled. Entra app roles separate administrative reading, assessment testing, lifecycle approval, insight operation, and Scout review. Logic App and metrics ingestion use service identity rather than dashboard user sessions.
+
+## Deployment boundaries
+
+The backend, admin API, frontend, PostgreSQL, storage, Logic App, and migration/database-access jobs are deployed independently. Containers run as an unprivileged user. Logic App run history protects email and attachment inputs/outputs, and delivery success or failure is reported to Herald.
+
+The administrator dashboard is a read-oriented operational surface. It reads canonical records and sends authorized commands to Oliver; it does not own lifecycle tables or migrations.

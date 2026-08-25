@@ -1,6 +1,8 @@
 # Path: utils/prompts/loader.py
 # Description: Build the single Oliver system prompt.
 
+from typing import Optional
+
 from jinja2 import Environment, PackageLoader, StrictUndefined
 
 _environment = Environment(
@@ -27,6 +29,9 @@ _environment = Environment(
 )
 
 
-def build_system_prompt(email_thread: str) -> str:
-    """Build the system prompt with the current email thread."""
-    return _environment.get_template("system-prompt.jinja2").render(email_thread=email_thread)
+def build_system_prompt(email_thread: str, canonical_assessment: Optional[str] = None) -> str:
+    """Build the system prompt with the thread and any verified scoring result."""
+    return _environment.get_template("system-prompt.jinja2").render(
+        canonical_assessment=canonical_assessment,
+        email_thread=email_thread,
+    )

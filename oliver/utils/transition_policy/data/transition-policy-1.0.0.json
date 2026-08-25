@@ -1,0 +1,201 @@
+{
+  "version": "transition-policy/1.0.0",
+  "transitions": {
+    "DI1": {
+      "current_stage": "DI1",
+      "target_stage": "DI2",
+      "current_stage_objective": "Establish whether the idea is sufficiently credible, bounded, and safe to justify a controlled pilot.",
+      "next_stage_objective": "Test technical, operational, user, value, integration, monitoring, and scalability hypotheses under controlled realistic conditions.",
+      "human_review_always": false,
+      "criteria": [
+        {
+          "criterion_id": "DI1_DI2_PROBLEM_VALIDATED",
+          "title": "Problem validated",
+          "description": "Evidence establishes that a real and relevant problem exists for the intended users or operation.",
+          "user_action": "confirm the problem and who or what it affects",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html and approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_SOLUTION_PLAUSIBLE",
+          "title": "Solution hypothesis plausible",
+          "description": "The proposed solution has a credible relationship to the problem and is plausible enough to test.",
+          "user_action": "explain why the proposed solution is plausible",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_INITIAL_EVIDENCE",
+          "title": "Initial evidence available",
+          "description": "At least some relevant evidence supports or tests the problem and solution hypotheses.",
+          "user_action": "provide initial evidence supporting the problem and solution hypotheses",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_PILOT_SCOPE",
+          "title": "Controlled pilot scope defined",
+          "description": "A bounded and feasible pilot can be run to test the important hypotheses without implying production deployment.",
+          "user_action": "clarify the pilot scope",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8 and approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_ACCOUNTABLE_OWNER",
+          "title": "Accountable owner identified",
+          "description": "An accountable owner is identified for the controlled pilot and its follow-up decisions.",
+          "user_action": "confirm an accountable owner",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI1_DI2_ACCEPTABLE_EXPERIMENT_RISK",
+          "title": "Risk acceptable for experimentation",
+          "description": "The proposed controlled pilot avoids obvious unacceptable safety, data, compliance, or operational risk.",
+          "user_action": "complete the experiment-risk check",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_LIVE_PERFORMANCE",
+          "title": "Realistic performance validation",
+          "description": "DI2 is expected to test solution performance using controlled realistic or live-like evidence.",
+          "user_action": "validate performance with controlled realistic or live-like evidence",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html and approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_INTEGRATION_VALIDATION",
+          "title": "Integration feasibility validation",
+          "description": "DI2 is expected to establish whether the solution can integrate with the relevant workflow and systems.",
+          "user_action": "validate integration with the relevant workflow and systems",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_VALUE_VALIDATION",
+          "title": "Operational value validation",
+          "description": "DI2 is expected to test the operational or business value hypothesis with measurable evidence.",
+          "user_action": "validate the measurable operational or business value hypothesis",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_ADOPTION_VALIDATION",
+          "title": "User adoption validation",
+          "description": "DI2 is expected to test whether intended users can and will use the solution in the controlled workflow.",
+          "user_action": "validate adoption with the intended users",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_MONITORING_DESIGN",
+          "title": "Monitoring needs established",
+          "description": "DI2 is expected to identify the monitoring, fallback, and operating controls needed for later stages.",
+          "user_action": "establish the monitoring, fallback, and operating controls needed for later stages",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_SCALABILITY_SIGNALS",
+          "title": "Scalability signals observed",
+          "description": "DI2 is expected to gather early evidence about repeatability and constraints beyond the controlled pilot.",
+          "user_action": "collect early evidence about repeatability and constraints beyond the pilot",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_LIVE_DATA_CONTROLS",
+          "title": "Controls before live-data connection",
+          "description": "Applicable cybersecurity and data-governance conditions must be completed before live data is connected.",
+          "user_action": "complete the required cybersecurity and data-governance controls before connecting live data",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": true,
+          "source": "approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_SOLUTION_NOT_VIABLE",
+          "title": "Evidence shows solution is not viable",
+          "description": "Actual evidence shows the proposed solution cannot credibly address the problem in a controlled pilot.",
+          "user_action": "address the evidence showing that the proposed solution is not viable",
+          "role": "BLOCKING_CONDITION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_UNACCEPTABLE_SAFETY_RISK",
+          "title": "Unacceptable safety risk",
+          "description": "Actual evidence identifies a safety risk that cannot be acceptably controlled during the proposed pilot.",
+          "user_action": "resolve the unacceptable safety risk identified for the pilot",
+          "role": "BLOCKING_CONDITION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_NO_FEASIBLE_PILOT",
+          "title": "No feasible pilot design",
+          "description": "Actual evidence shows there is no bounded and feasible experiment capable of testing the hypothesis.",
+          "user_action": "define a bounded and feasible pilot design",
+          "role": "BLOCKING_CONDITION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "approved transition design"
+        },
+        {
+          "criterion_id": "DI1_DI2_PROHIBITED_DATA_COMPLIANCE",
+          "title": "Prohibited data or compliance condition",
+          "description": "Actual evidence identifies a data or compliance prohibition that prevents the proposed pilot from proceeding.",
+          "user_action": "resolve the data or compliance condition preventing the pilot",
+          "role": "BLOCKING_CONDITION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "approved transition design"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oliver — Target Architecture &amp; Transition Blueprint</title>
+<style>
+  :root{
+    --purple:#7c3aed;--purple-dark:#53239a;--purple-soft:#f4effc;
+    --navy:#182332;--ink:#253342;--muted:#617180;--line:#dfe6ea;--surface:#fff;--canvas:#f3f6f7;
+    --blue:#0969a8;--blue-soft:#eaf4fb;--green:#16784a;--green-soft:#edf9f3;
+    --amber:#ad6505;--amber-soft:#fff7e8;--red:#a93636;--red-soft:#fff1f1;--slate:#546473;--slate-soft:#f5f7f8;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;padding:0 0 64px;background:var(--canvas);color:var(--ink);font:15px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  .hero{padding:42px 24px 36px;color:#fff;background:linear-gradient(125deg,#8751eb 0%,#7027d2 48%,#4f1c91 100%)}
+  .hero .wrap{padding:0}
+  .eyebrow{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;opacity:.84}
+  h1{max-width:880px;margin:0;font-size:34px;line-height:1.16;letter-spacing:-.025em}
+  .hero .sub{max-width:900px;margin:14px 0 0;font-size:17px;line-height:1.55;opacity:.96}
+  .docmeta{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:24px;padding-top:16px;border-top:1px solid rgba(255,255,255,.25);font-size:12px;opacity:.88}
+  .docmeta b{color:#fff}
+  .toc,section{margin:22px 0;border:1px solid var(--line);border-radius:11px;background:var(--surface);box-shadow:0 2px 10px rgba(24,35,50,.035)}
+  .toc{padding:20px 22px}
+  .toc-title,.kicker{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--purple-dark)}
+  .toc ol{display:grid;grid-template-columns:1fr 1fr;gap:3px 26px;margin:10px 0 0;padding:0;list-style:none}
+  .toc li{margin:0}
+  .toc a{display:flex;align-items:center;gap:10px;padding:6px 7px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:13.5px}
+  .toc a:hover{background:var(--purple-soft);color:var(--purple-dark)}
+  .toc .n{flex:none;width:27px;height:23px;border-radius:5px;background:var(--purple-soft);color:var(--purple-dark);font-size:10px;font-weight:800;line-height:23px;text-align:center}
+  section{padding:28px 30px;scroll-margin-top:12px}
+  h2{margin:0 0 5px;color:var(--purple-dark);font-size:22px;line-height:1.3;letter-spacing:-.01em}
+  h2 .num{display:inline-block;width:31px;height:31px;margin-right:10px;border-radius:7px;background:var(--purple);color:#fff;font-size:14px;line-height:31px;text-align:center;vertical-align:2px}
+  h3{margin:23px 0 8px;color:var(--navy);font-size:16px}
+  h4{margin:0 0 5px;color:var(--navy);font-size:14px}
+  p{margin:9px 0}
+  .lede{max-width:920px;margin:6px 0 18px;color:var(--muted);font-size:15px}
+  ul,ol{margin:9px 0;padding-left:21px}
+  li{margin:5px 0}
+  strong{color:var(--navy)}
+  code{padding:1px 5px;border-radius:4px;background:var(--purple-soft);color:var(--purple-dark);font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  table{width:100%;margin:14px 0;border-collapse:collapse;font-size:13.2px}
+  th{padding:10px 11px;border-bottom:2px solid var(--purple);background:#f4f7f8;color:var(--purple-dark);font-size:11.5px;letter-spacing:.025em;text-align:left;vertical-align:bottom}
+  td{padding:10px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  .callout{margin:16px 0;padding:14px 17px;border-left:4px solid var(--purple);border-radius:0 8px 8px 0;background:var(--purple-soft);font-size:14px}
+  .callout.blue{border-color:var(--blue);background:var(--blue-soft)}
+  .callout.green{border-color:var(--green);background:var(--green-soft)}
+  .callout.amber{border-color:var(--amber);background:var(--amber-soft)}
+  .grid2,.grid3{display:grid;gap:13px;margin:15px 0}
+  .grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .card{min-width:0;padding:15px 16px;border:1px solid var(--line);border-radius:9px;background:#fff}
+  .card p,.card li{font-size:13.2px}
+  .card p:last-child,.card ul:last-child{margin-bottom:0}
+  .card.agent{border-color:#d8c9ef;background:var(--purple-soft)}
+  .card.service{border-color:#bcd9eb;background:var(--blue-soft)}
+  .card.data{border-color:#bfe4cf;background:var(--green-soft)}
+  .card.human{border-color:#ead1a7;background:var(--amber-soft)}
+  .tag{display:inline-block;padding:2px 8px;border-radius:16px;font-size:10px;font-weight:800;letter-spacing:.025em;white-space:nowrap}
+  .tag.agent{background:#e9dcfb;color:#6325ad}.tag.service{background:#dcedf8;color:#096197}.tag.data{background:#d9f1e3;color:#12633d}.tag.human{background:#f7e4bf;color:#8c5000}.tag.now{background:#d9f1e3;color:#12633d}.tag.later{background:#e8edf0;color:#4d5c68}
+  .architecture{margin:17px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fbfcfc}
+  .arch-row{display:grid;grid-template-columns:180px 1fr;border-bottom:1px solid var(--line)}
+  .arch-row:last-child{border-bottom:0}
+  .arch-label{padding:13px 15px;background:#f0f3f5;color:var(--navy);font-size:12px;font-weight:800;letter-spacing:.03em}
+  .arch-body{display:flex;flex-wrap:wrap;gap:7px;padding:11px 13px}
+  .chip{padding:6px 9px;border:1px solid #d5dde2;border-radius:6px;background:#fff;color:var(--ink);font-size:12px;font-weight:650}
+  .chip.agent{border-color:#d5c1f3;background:var(--purple-soft);color:#6026a6}.chip.service{border-color:#bad7e9;background:var(--blue-soft);color:#075f97}.chip.data{border-color:#b9dfc9;background:var(--green-soft);color:#12633d}.chip.human{border-color:#e7c995;background:var(--amber-soft);color:#895000}
+  .context{display:grid;grid-template-columns:1fr 70px 1.25fr 70px 1fr;gap:9px;align-items:stretch;margin:18px 0}
+  .context .box{display:flex;flex-direction:column;justify-content:center;min-height:110px;padding:15px;border:1px solid var(--line);border-radius:9px;background:#fff;text-align:center}
+  .context .box.core{border-color:#cdb6ef;background:var(--purple-soft)}
+  .context .box small{display:block;margin-top:5px;color:var(--muted);font-size:11.5px}
+  .arrow{align-self:center;color:var(--purple);font-size:24px;font-weight:800;text-align:center}
+  .sequence{margin:13px 0;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seq-row{display:grid;grid-template-columns:34px 165px 1fr;align-items:start;border-bottom:1px solid var(--line)}
+  .seq-row:last-child{border-bottom:0}
+  .seq-n{height:100%;padding:10px 0;background:var(--purple-soft);color:var(--purple-dark);font-size:11px;font-weight:800;text-align:center}
+  .seq-owner{padding:10px 12px;color:var(--navy);font-size:12.5px;font-weight:800}
+  .seq-action{padding:10px 12px;font-size:13px}
+  .decision{margin:13px 0;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .decision-head{display:flex;align-items:center;gap:10px;padding:10px 13px;background:#f5f7f8;border-bottom:1px solid var(--line)}
+  .decision-id{padding:2px 7px;border-radius:5px;background:var(--navy);color:#fff;font-size:10px;font-weight:800}
+  .decision-body{display:grid;grid-template-columns:115px 1fr;gap:8px;padding:9px 13px;border-bottom:1px solid var(--line);font-size:13px}
+  .decision-body:last-child{border-bottom:0}
+  .decision-body b{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--slate)}
+  .phase{margin:12px 0;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .phase-head{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:10px;padding:11px 13px;background:#faf9fd;border-bottom:1px solid var(--line)}
+  .phase-n{width:29px;height:29px;border-radius:7px;background:var(--purple);color:#fff;font-size:12px;font-weight:800;line-height:29px;text-align:center}
+  .phase-head b{font-size:14px}.phase-head span:last-child{color:var(--muted);font-size:11px}
+  .phase-body{display:grid;grid-template-columns:135px 1fr;gap:11px;padding:9px 14px;border-bottom:1px solid var(--line);font-size:13px}
+  .phase-body:last-child{border-bottom:0}
+  .phase-body b{color:var(--slate);font-size:10.5px;letter-spacing:.055em;text-transform:uppercase}
+  .checklist{margin:9px 0;padding:0;list-style:none}
+  .checklist li{position:relative;margin:0;padding:7px 8px 7px 31px;border-bottom:1px solid #edf1f3;font-size:13px}
+  .checklist li:last-child{border-bottom:0}
+  .checklist li::before{content:"□";position:absolute;left:8px;top:6px;color:var(--purple);font-size:15px;font-weight:800}
+  .checklist li.done::before{content:"✓";color:var(--green)}
+  footer{margin-top:22px;color:var(--muted);font-size:11.5px;text-align:center}
+  @media(max-width:780px){
+    .wrap{padding:0 12px}.hero{padding:30px 16px 27px}h1{font-size:28px}.hero .sub{font-size:15px}
+    section{padding:22px 16px}.toc{padding:18px 14px}.toc ol,.grid2,.grid3{grid-template-columns:minmax(0,1fr)}
+    .context{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}
+    .arch-row{grid-template-columns:1fr}.arch-label{border-bottom:1px solid var(--line)}
+    .seq-row{grid-template-columns:30px 110px 1fr}.decision-body,.phase-body{grid-template-columns:1fr}.phase-head{grid-template-columns:38px 1fr}.phase-head span:last-child{display:none}
+    table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}th,td,code{overflow-wrap:anywhere;word-break:break-word}
+  }
+  @media print{body{background:#fff}.toc{break-after:page}section,.card,.decision,.phase{break-inside:avoid}.hero{print-color-adjust:exact;-webkit-print-color-adjust:exact}a{color:inherit;text-decoration:none}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Siemens Energy · TI · Architecture Blueprint · OLV-ARC-004</p>
+    <h1>Oliver — Target Architecture &amp; Transition Blueprint</h1>
+    <p class="sub">A controlled evolution of the current email-assessment application into a governed, evidence-led lifecycle platform—without replacing working code or turning every responsibility into an AI agent.</p>
+    <div class="docmeta">
+      <span><b>Owner</b> Animesh</span><span><b>Stakeholder</b> Anand Sengupta</span><span><b>Version</b> 1.0</span><span><b>Date</b> 24 August 2026</span><span><b>Status</b> Working architecture baseline</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="toc" aria-label="Document contents">
+    <div class="toc-title">Architecture views</div>
+    <ol>
+      <li><a href="#s0"><span class="n">0</span>Executive position</a></li>
+      <li><a href="#s1"><span class="n">1</span>Baseline and scope</a></li>
+      <li><a href="#s2"><span class="n">2</span>Drivers and principles</a></li>
+      <li><a href="#s3"><span class="n">3</span>System context</a></li>
+      <li><a href="#s4"><span class="n">4</span>Logical architecture</a></li>
+      <li><a href="#s5"><span class="n">5</span>Component responsibilities</a></li>
+      <li><a href="#s6"><span class="n">6</span>Runtime behaviour</a></li>
+      <li><a href="#s7"><span class="n">7</span>Information architecture</a></li>
+      <li><a href="#s8"><span class="n">8</span>Lifecycle governance</a></li>
+      <li><a href="#s9"><span class="n">9</span>Security and deployment</a></li>
+      <li><a href="#s10"><span class="n">10</span>Integration and resilience</a></li>
+      <li><a href="#s11"><span class="n">11</span>Transition architecture</a></li>
+      <li><a href="#s12"><span class="n">12</span>Assurance and decisions</a></li>
+    </ol>
+  </nav>
+
+  <section id="s0">
+    <h2><span class="num">0</span>Executive position</h2>
+    <p class="lede">Oliver should become a stateful lifecycle system, but the safe route is an incremental modular architecture—not a wholesale rewrite and not a mesh of seventeen independent model calls.</p>
+    <div class="callout">
+      <strong>Architecture decision.</strong> Keep PostgreSQL as the system of record, preserve the current email and dashboard surfaces, introduce one canonical initiative aggregate, and separate AI judgement from deterministic control. Begin with two reasoning agents—Assessment and Coach. Add Portfolio Intelligence after lifecycle data is trustworthy, then add Scout as a governed candidate-discovery capability.
+    </div>
+    <div class="grid3">
+      <div class="card agent"><span class="tag agent">AI reasoning</span><h3>Interpret</h3><p>Understand evidence, explain gaps, identify portfolio patterns, and draft communication.</p></div>
+      <div class="card service"><span class="tag service">Deterministic control</span><h3>Decide</h3><p>Calculate official scores, validate transitions, enforce permissions, schedule work, and record delivery.</p></div>
+      <div class="card data"><span class="tag data">Canonical state</span><h3>Remember</h3><p>Store one initiative identity, versioned evidence, assessments, decisions, and lifecycle history.</p></div>
+    </div>
+    <p><strong>Target outcome:</strong> every idea can be reassessed as evidence changes, moved through DI1–DI5 under explicit authority rules, observed as part of a portfolio, and audited from inbound message to final lifecycle decision.</p>
+  </section>
+
+  <section id="s1">
+    <h2><span class="num">1</span>Baseline and scope</h2>
+    <p class="lede">This blueprint starts from the repository that exists today. It does not assume the older concept architecture is already implemented.</p>
+    <table>
+      <tr><th>Current capability</th><th>Repository baseline</th><th>Architectural gap</th></tr>
+      <tr><td>Email assessment</td><td>FastAPI endpoint stores threads, messages and runs; Bifrost-backed model output and deterministic scoring produce the response.</td><td>Assessment is route-centric and does not yet operate on a durable initiative/evidence aggregate.</td></tr>
+      <tr><td>Canonical result</td><td>Versioned score, DI stage, gate result, confidence and dimension breakdown are persisted per assessment run.</td><td>The current stage defaults to DI1; there is no authoritative transition history or current lifecycle record.</td></tr>
+      <tr><td>Related ideas</td><td>Embeddings are configured from <code>.env</code> and stored for semantic matching.</td><td>Similarity is thread-based; canonical initiative deduplication and governed portfolio clustering are not present.</td></tr>
+      <tr><td>Admin experience</td><td>React dashboard and read-oriented FastAPI backend display conversations and assessments from PostgreSQL.</td><td>No Entra authorization, approval workflow, hold/resume control, delivery state or operational queue.</td></tr>
+      <tr><td>Infrastructure</td><td>Local PostgreSQL is the active test database. Azure Terraform and Logic App definitions are present as production direction.</td><td>Azure identity, production database, attachment storage and delivery callback remain deployment work.</td></tr>
+    </table>
+    <div class="grid2">
+      <div class="card"><h4>In scope</h4><ul><li>Full reassessment from accumulated evidence</li><li>PDF, Word, Excel and PowerPoint evidence</li><li>DI lifecycle control and human decisions</li><li>Portfolio patterns and governed Scout discovery</li><li>Local-first development, Azure-ready boundaries</li></ul></div>
+      <div class="card"><h4>Not part of this restructure</h4><ul><li>Replacing working UI or email flows without need</li><li>Seventeen separate LLM runtimes</li><li>Autonomous Scale, No-Go or Retire decisions</li><li>Unrestricted mailbox or repository surveillance</li><li>Immediate migration to Azure PostgreSQL</li></ul></div>
+    </div>
+  </section>
+
+  <section id="s2">
+    <h2><span class="num">2</span>Architecture drivers and principles</h2>
+    <p class="lede">The design is governed by lifecycle integrity, explainability and operational safety—not by the number of agents.</p>
+    <table>
+      <tr><th>Driver</th><th>Required architectural response</th><th>Evidence of success</th></tr>
+      <tr><td>Complete reassessment</td><td>Build every assessment from a versioned evidence snapshot containing relevant historical and new evidence.</td><td>The same evidence version always reproduces the same deterministic score inputs.</td></tr>
+      <tr><td>Safe lifecycle movement</td><td>Put transition policy in StageMaster code; require recorded human authority for irreversible states.</td><td>No model response can directly mutate lifecycle state.</td></tr>
+      <tr><td>No accidental duplication</td><td>Use provider message IDs, content hashes, unique constraints and an outbox; distinguish history from redundant copies.</td><td>Retries create no duplicate message, assessment, event or delivery.</td></tr>
+      <tr><td>Model portability</td><td>All model and embedding names come from environment configuration behind one provider boundary.</td><td>Provider/model changes require configuration, not domain-code edits.</td></tr>
+      <tr><td>Operational trust</td><td>Persist correlation, prompt/rubric/model versions, fallback state, latency and delivery outcome.</td><td>An admin can explain what happened and retry safely.</td></tr>
+      <tr><td>Least privilege</td><td>Separate interactive Entra roles, Logic App managed identity and database roles.</td><td>Each caller can access only its required API and data operations.</td></tr>
+    </table>
+    <div class="callout blue"><strong>Principle:</strong> the model may interpret evidence and recommend; versioned code owns scoring, permissions and lifecycle state. This boundary is the foundation for reliable agentic behaviour.</div>
+  </section>
+
+  <section id="s3">
+    <h2><span class="num">3</span>System context</h2>
+    <p class="lede">Oliver sits between idea submitters, lifecycle administrators, approved enterprise sources and external platform services.</p>
+    <div class="context" aria-label="Oliver system context">
+      <div class="box"><strong>People &amp; sources</strong><small>Submitter email · Animesh · Anand · approved Scout sources</small></div>
+      <div class="arrow">→</div>
+      <div class="box core"><strong>Oliver system boundary</strong><small>Intake · evidence · assessment · lifecycle · portfolio · administration</small></div>
+      <div class="arrow">↔</div>
+      <div class="box"><strong>Platform services</strong><small>Logic App / Graph · Bifrost · PostgreSQL · object storage · Entra ID</small></div>
+    </div>
+    <table>
+      <tr><th>Actor</th><th>Interaction</th><th>Trust boundary</th></tr>
+      <tr><td>Submitter</td><td>Sends an idea, clarification or evidence by email; receives coaching and assessment.</td><td>No dashboard access is implied by email participation.</td></tr>
+      <tr><td>Animesh / Anand</td><td>View initiatives, run sandbox assessments, hold/resume and review governed decisions.</td><td>Interactive access requires Entra token plus Oliver app role.</td></tr>
+      <tr><td>Logic App</td><td>Delivers inbound mail to Oliver and reports outbound delivery success or failure.</td><td>Machine identity authenticates only approved integration endpoints.</td></tr>
+      <tr><td>Approved source owner</td><td>Authorizes a bounded source for Scout discovery and defines retention/access rules.</td><td>Scout receives only allowlisted content through a connector.</td></tr>
+    </table>
+  </section>
+
+  <section id="s4">
+    <h2><span class="num">4</span>Logical architecture</h2>
+    <p class="lede">The target is a modular lifecycle platform. These are logical planes, not mandatory microservices; they should remain deployable together until scale or ownership justifies separation.</p>
+    <div class="architecture">
+      <div class="arch-row"><div class="arch-label">Channels</div><div class="arch-body"><span class="chip">Email</span><span class="chip">Admin dashboard</span><span class="chip">Approved source connectors</span></div></div>
+      <div class="arch-row"><div class="arch-label">Identity &amp; API</div><div class="arch-body"><span class="chip service">Entra validation</span><span class="chip service">Role policy</span><span class="chip service">Idempotent APIs</span><span class="chip service">Request correlation</span></div></div>
+      <div class="arch-row"><div class="arch-label">Application control</div><div class="arch-body"><span class="chip service">Conductor</span><span class="chip service">Registrar</span><span class="chip service">StageMaster</span><span class="chip service">Pacer</span><span class="chip service">Herald</span></div></div>
+      <div class="arch-row"><div class="arch-label">Reasoning</div><div class="arch-body"><span class="chip agent">Assessment Agent</span><span class="chip agent">Idea Coach</span><span class="chip agent">Portfolio Intelligence</span><span class="chip agent">Scout</span></div></div>
+      <div class="arch-row"><div class="arch-label">Domain &amp; state</div><div class="arch-body"><span class="chip data">Initiative aggregate</span><span class="chip data">Evidence ledger</span><span class="chip data">Assessment history</span><span class="chip data">Lifecycle history</span><span class="chip data">Outbox</span></div></div>
+      <div class="arch-row"><div class="arch-label">Assurance</div><div class="arch-body"><span class="chip service">Auditor</span><span class="chip service">Sentinel</span><span class="chip service">Realizer</span><span class="chip service">Telemetry &amp; alerts</span></div></div>
+      <div class="arch-row"><div class="arch-label">Platform</div><div class="arch-body"><span class="chip">PostgreSQL</span><span class="chip">Attachment storage</span><span class="chip">Bifrost provider</span><span class="chip">Logic App / Graph</span><span class="chip">Azure Monitor</span></div></div>
+    </div>
+    <div class="callout green"><strong>Deployment stance:</strong> maintain clear module and contract boundaries inside the current applications first. Introduce queues, workers or independently deployed services only when retry isolation, scheduling, security or load requires them.</div>
+  </section>
+
+  <section id="s5">
+    <h2><span class="num">5</span>Component responsibility model</h2>
+    <p class="lede">The names from Anand's lifecycle vision are retained as responsibilities. Only responsibilities requiring contextual judgement become agents.</p>
+    <table>
+      <tr><th>Component</th><th>Type</th><th>Owns</th><th>Must not own</th></tr>
+      <tr><td>Assessment</td><td><span class="tag agent">Agent · now</span></td><td>Evidence interpretation across completeness, quality, value, feasibility and readiness; structured findings with citations and confidence.</td><td>Official arithmetic or lifecycle mutation.</td></tr>
+      <tr><td>Idea Coach</td><td><span class="tag agent">Agent · now</span></td><td>Grounded, professional submitter communication and the smallest useful next questions.</td><td>Changing the approved assessment.</td></tr>
+      <tr><td>Portfolio Intelligence</td><td><span class="tag agent">Agent · next</span></td><td>Interpret verified aggregates, clusters, recurring blockers and cross-initiative patterns.</td><td>Inventing metrics or reading unrestricted raw mail.</td></tr>
+      <tr><td>Scout</td><td><span class="tag agent">Agent · later</span></td><td>Detecting potential initiatives in explicitly approved sources and creating reviewable candidates.</td><td>Registering an initiative, contacting a person or triggering assessment.</td></tr>
+      <tr><td>Registrar / Conductor</td><td><span class="tag service">Service</span></td><td>Canonical identity, commands, event routing, idempotency and workflow coordination.</td><td>Semantic judgement.</td></tr>
+      <tr><td>StageMaster / Pacer</td><td><span class="tag service">Policy</span></td><td>Valid transitions, authority rules, hold state, cadence and stall detection.</td><td>Free-form lifecycle decisions.</td></tr>
+      <tr><td>Herald / Auditor</td><td><span class="tag service">Service</span></td><td>Rendered communication, delivery attempts and append-only decision history.</td><td>Unrecorded side effects.</td></tr>
+      <tr><td>Sentinel / Realizer</td><td><span class="tag service">Service first</span></td><td>Operational thresholds, monitoring evidence and projected-versus-realized value.</td><td>Replacing source-system measurements with model opinion.</td></tr>
+    </table>
+    <div class="decision">
+      <div class="decision-head"><span class="decision-id">ADR-04-01</span><strong>Four reasoning agents over time; deterministic lifecycle services</strong></div>
+      <div class="decision-body"><b>Reason</b><span>It preserves every lifecycle responsibility while reducing model latency, cost, inconsistent state and debugging complexity.</span></div>
+      <div class="decision-body"><b>Consequence</b><span>Assessment is a capability bundle rather than five separate model calls. Specialized agents are introduced only if evaluation demonstrates a quality gain.</span></div>
+    </div>
+  </section>
+
+  <section id="s6">
+    <h2><span class="num">6</span>Runtime behaviour</h2>
+    <p class="lede">Three flows define the target behaviour: evidence-led reassessment, governed lifecycle movement and proactive candidate discovery.</p>
+    <h3>A. New idea or reassessment</h3>
+    <div class="sequence">
+      <div class="seq-row"><div class="seq-n">1</div><div class="seq-owner">Intake</div><div class="seq-action">Validate caller, normalize the email, enforce message-ID idempotency and store the original message once.</div></div>
+      <div class="seq-row"><div class="seq-n">2</div><div class="seq-owner">Registrar</div><div class="seq-action">Resolve the canonical initiative; create one only when the message represents a genuinely new idea.</div></div>
+      <div class="seq-row"><div class="seq-n">3</div><div class="seq-owner">Evidence service</div><div class="seq-action">Extract approved attachments, classify evidence and create an immutable evidence version referencing source records.</div></div>
+      <div class="seq-row"><div class="seq-n">4</div><div class="seq-owner">Assessment Agent</div><div class="seq-action">Read the evidence snapshot, current stage and prior assessment; return typed findings, gaps, citations and confidence.</div></div>
+      <div class="seq-row"><div class="seq-n">5</div><div class="seq-owner">Scoring service</div><div class="seq-action">Apply the versioned rubric and stage weights to produce the official score and recommendation.</div></div>
+      <div class="seq-row"><div class="seq-n">6</div><div class="seq-owner">StageMaster</div><div class="seq-action">Validate the recommendation against the current state, hold status and human-authority rules.</div></div>
+      <div class="seq-row"><div class="seq-n">7</div><div class="seq-owner">Idea Coach</div><div class="seq-action">Compose a grounded response from the approved result; it cannot alter score, stage or decision.</div></div>
+      <div class="seq-row"><div class="seq-n">8</div><div class="seq-owner">Herald / Auditor</div><div class="seq-action">Create one outbound delivery request, record the complete trace, then accept the Logic App delivery callback.</div></div>
+    </div>
+    <h3>B. Governed lifecycle movement</h3>
+    <div class="sequence">
+      <div class="seq-row"><div class="seq-n">1</div><div class="seq-owner">StageMaster</div><div class="seq-action">Creates a transition proposal from the canonical assessment and current lifecycle version.</div></div>
+      <div class="seq-row"><div class="seq-n">2</div><div class="seq-owner">Policy</div><div class="seq-action">Automatically applies an allowed DI1–DI4 move, or routes DI5 / No-Go / Retire / override to the approval queue.</div></div>
+      <div class="seq-row"><div class="seq-n">3</div><div class="seq-owner">Admin</div><div class="seq-action">Approves, rejects or requests evidence with a mandatory reason; the decision is optimistic-lock protected.</div></div>
+      <div class="seq-row"><div class="seq-n">4</div><div class="seq-owner">Auditor</div><div class="seq-action">Appends actor, before/after state, evidence and assessment versions, reason and correlation ID.</div></div>
+    </div>
+    <h3>C. Scout candidate discovery</h3>
+    <div class="sequence">
+      <div class="seq-row"><div class="seq-n">1</div><div class="seq-owner">Connector</div><div class="seq-action">Reads only an approved source scope under the source owner's access and retention policy.</div></div>
+      <div class="seq-row"><div class="seq-n">2</div><div class="seq-owner">Scout</div><div class="seq-action">Identifies a problem, plausible value/data signal and possible owner; returns source references and confidence.</div></div>
+      <div class="seq-row"><div class="seq-n">3</div><div class="seq-owner">Registrar search</div><div class="seq-action">Checks exact hashes and semantic similarity against initiatives and existing candidates.</div></div>
+      <div class="seq-row"><div class="seq-n">4</div><div class="seq-owner">Admin review</div><div class="seq-action">Accepts as a draft, merges with an initiative or rejects with a reason. No submitter is contacted automatically.</div></div>
+    </div>
+  </section>
+
+  <section id="s7">
+    <h2><span class="num">7</span>Information architecture</h2>
+    <p class="lede">The initiative is the aggregate root. Messages and files are evidence sources; assessments and transitions are versioned conclusions—not competing copies of the idea.</p>
+    <div class="architecture">
+      <div class="arch-row"><div class="arch-label">Initiative</div><div class="arch-body"><span class="chip data">identity</span><span class="chip data">owner &amp; participants</span><span class="chip data">current lifecycle version</span><span class="chip data">hold state</span></div></div>
+      <div class="arch-row"><div class="arch-label">Source records</div><div class="arch-body"><span class="chip">messages</span><span class="chip">attachments</span><span class="chip">admin evidence</span><span class="chip">Scout source references</span></div></div>
+      <div class="arch-row"><div class="arch-label">Versioned evidence</div><div class="arch-body"><span class="chip data">evidence snapshot</span><span class="chip data">evidence items</span><span class="chip data">citations</span><span class="chip data">extraction provenance</span></div></div>
+      <div class="arch-row"><div class="arch-label">Versioned decisions</div><div class="arch-body"><span class="chip data">assessment</span><span class="chip data">transition proposal</span><span class="chip data">admin decision</span><span class="chip data">delivery attempt</span></div></div>
+    </div>
+    <table>
+      <tr><th>Record</th><th>Source of truth</th><th>Identity / version rule</th></tr>
+      <tr><td>Initiative</td><td>One durable business concept independent of a single email thread.</td><td>Stable UUID; lifecycle updates use a version for concurrency control.</td></tr>
+      <tr><td>Message</td><td>Inbound or outbound communication.</td><td>Unique provider message ID; immutable raw content plus normalized projection.</td></tr>
+      <tr><td>Attachment</td><td>Original binary plus extraction status and metadata.</td><td>Content hash prevents duplicate storage; extracted text is rebuildable.</td></tr>
+      <tr><td>Evidence snapshot</td><td>The exact source set used by an assessment.</td><td>Monotonic version; references source records instead of copying their raw bodies.</td></tr>
+      <tr><td>Assessment</td><td>Official result for one evidence and policy version.</td><td>Append-only; stores rubric, weight, prompt, provider/model and fallback provenance.</td></tr>
+      <tr><td>Lifecycle event</td><td>Every proposal and applied state change.</td><td>Append-only; references actor, authority, prior state and resulting state.</td></tr>
+    </table>
+    <div class="callout amber"><strong>History is intentional, duplication is not.</strong> Several assessments may exist because evidence changed. They all reference one initiative and their evidence versions; they do not duplicate the current initiative record or original files.</div>
+  </section>
+
+  <section id="s8">
+    <h2><span class="num">8</span>Lifecycle governance</h2>
+    <p class="lede">The DI stage is authoritative domain state. A model may recommend a stage; StageMaster and the applicable human authority decide whether state changes.</p>
+    <table>
+      <tr><th>Stage</th><th>Official name</th><th>Architectural meaning</th><th>Movement rule</th></tr>
+      <tr><td><strong>DI1</strong></td><td>Concept</td><td>Problem, intended outcome and initial ownership are being established.</td><td>May progress automatically when policy and evidence thresholds pass.</td></tr>
+      <tr><td><strong>DI2</strong></td><td>Pilot</td><td>Pilot scope, data access, sponsor and measurable success criteria are credible.</td><td>May progress automatically unless held or routed to review.</td></tr>
+      <tr><td><strong>DI3</strong></td><td>Test</td><td>Technical and business hypotheses are being validated with evidence.</td><td>May progress automatically unless held or routed to review.</td></tr>
+      <tr><td><strong>DI4</strong></td><td>Implement</td><td>Production readiness, operations, controls and ownership are evidenced.</td><td>Proposal to DI5 always requires human approval.</td></tr>
+      <tr><td><strong>DI5</strong></td><td>Scale</td><td>The initiative is deployed, monitored and delivering measured value.</td><td>Terminal scale state; future changes are monitor/value events, not “path to DI5”.</td></tr>
+    </table>
+    <div class="grid2">
+      <div class="card service"><h4>Automatic authority</h4><ul><li>Valid forward movement within DI1–DI4</li><li>Only when confidence, evidence and policy gates pass</li><li>Never while the initiative is on HOLD</li><li>Every change remains reversible through a governed proposal</li></ul></div>
+      <div class="card human"><h4>Human authority</h4><ul><li>DI5 Scale</li><li>No-Go and Retire</li><li>Manual stage override or rollback</li><li>Low-confidence / policy-exception decisions</li><li>Hold and resume actions with a reason</li></ul></div>
+    </div>
+    <p><strong>HOLD semantics:</strong> stop automatic transitions, reminders and escalation. Continue accepting and storing evidence. Permit an authorized admin to run a manual reassessment without silently resuming the initiative.</p>
+  </section>
+
+  <section id="s9">
+    <h2><span class="num">9</span>Security and deployment architecture</h2>
+    <p class="lede">Logic App managed identity secures machine-to-machine email integration. It does not authenticate dashboard users; Entra ID and API-side role checks do that.</p>
+    <table>
+      <tr><th>Principal</th><th>Authentication</th><th>Authorization</th></tr>
+      <tr><td>Animesh / Anand</td><td>Microsoft Entra interactive sign-in.</td><td>Initial <code>Oliver.Admin</code> membership. May view live initiatives and run isolated sandbox assessments; lifecycle decision rights are enabled explicitly.</td></tr>
+      <tr><td>Logic App</td><td>Managed identity obtains an access token for the Oliver API.</td><td>Integration role limited to inbound email and delivery-result endpoints.</td></tr>
+      <tr><td>Oliver service</td><td>Local database credentials now; managed identity or Key Vault-backed secret in Azure.</td><td>Write only Oliver-owned schemas and attachment paths.</td></tr>
+      <tr><td>Admin backend</td><td>Service identity plus end-user token context.</td><td>Read role by default; mutation endpoints require a specific app role and audit reason.</td></tr>
+    </table>
+    <div class="architecture">
+      <div class="arch-row"><div class="arch-label">Local development</div><div class="arch-body"><span class="chip">localhost UI</span><span class="chip">Admin API</span><span class="chip">Oliver API</span><span class="chip data">local PostgreSQL</span><span class="chip agent">Bifrost</span></div></div>
+      <div class="arch-row"><div class="arch-label">Azure target</div><div class="arch-body"><span class="chip human">Entra ID</span><span class="chip">Web application</span><span class="chip service">API compute</span><span class="chip service">Logic App / Graph</span><span class="chip data">Azure PostgreSQL</span><span class="chip data">Blob storage</span><span class="chip">Key Vault</span><span class="chip">Monitor</span></div></div>
+    </div>
+    <ul>
+      <li><strong>API enforcement:</strong> the backend validates audience, issuer, expiry and app role on every protected call; hiding a frontend route is not authorization.</li>
+      <li><strong>Database separation:</strong> migrations owner, Oliver writer and admin reader/mutator roles are distinct.</li>
+      <li><strong>Local safety:</strong> any development bypass is localhost-only, disabled by default outside development and visibly identified in the UI.</li>
+      <li><strong>Production posture:</strong> TLS, private database connectivity, secret rotation, attachment malware scanning and audit retention are deployment gates.</li>
+    </ul>
+  </section>
+
+  <section id="s10">
+    <h2><span class="num">10</span>Integration and resilience architecture</h2>
+    <p class="lede">Public contracts remain small and stable. Internal side effects use an outbox so persistence and event publication cannot disagree.</p>
+    <table>
+      <tr><th>Contract group</th><th>Purpose</th><th>Reliability rule</th></tr>
+      <tr><td>Email intake</td><td>Receive normalized message, participants and attachment references.</td><td>Unique provider message ID; acknowledge only after durable acceptance.</td></tr>
+      <tr><td>Delivery result</td><td>Record Logic App accepted, sent or failed outcome.</td><td>Idempotent by delivery attempt ID; failures remain retryable and visible.</td></tr>
+      <tr><td>Initiative query</td><td>Portfolio list, initiative detail, evidence and timeline.</td><td>Read projections derive from canonical records; no hidden business rules in the UI.</td></tr>
+      <tr><td>Lifecycle commands</td><td>Hold, resume, reassess and decide a transition proposal.</td><td>Role check, expected lifecycle version and mandatory reason.</td></tr>
+      <tr><td>Sandbox</td><td>Run the same assessment contracts against test input.</td><td>Explicit sandbox partition; never mutates live state or sends email.</td></tr>
+      <tr><td>Scout review</td><td>List, accept, merge or reject candidates.</td><td>Human-reviewed command with source citation and duplicate check.</td></tr>
+    </table>
+    <h3>Event envelope</h3>
+    <p>Every internal event carries <code>event_id</code>, <code>event_type</code>, <code>schema_version</code>, <code>occurred_at</code>, <code>initiative_id</code>, <code>correlation_id</code>, producer and a minimal payload or record reference. Initial event types are <code>message.received</code>, <code>evidence.versioned</code>, <code>assessment.completed</code>, <code>transition.proposed</code>, <code>transition.applied</code>, <code>delivery.updated</code> and <code>scout.candidate_created</code>.</p>
+    <div class="grid3">
+      <div class="card"><h4>Model failure</h4><p>Validate structured output; retry transient failures; fall back only where an evaluated fallback exists. Never persist invented score/stage data.</p></div>
+      <div class="card"><h4>Workflow failure</h4><p>Persist processing state and error category. Resume from the failed step using the same idempotency and correlation keys.</p></div>
+      <div class="card"><h4>Delivery failure</h4><p>Keep the assessment committed, mark delivery failed, retry with backoff and surface the attempt in Operations.</p></div>
+    </div>
+  </section>
+
+  <section id="s11">
+    <h2><span class="num">11</span>Transition architecture</h2>
+    <p class="lede">Each increment leaves Oliver deployable and creates the foundation for the next. The order is architectural: reliable state before autonomy.</p>
+
+    <div class="phase"><div class="phase-head"><span class="phase-n">0</span><b>Stabilize the current gate</b><span>Foundation</span></div><div class="phase-body"><b>Change</b><span>Restart from current code; fix null rendering, classify before scoring, narrow configuration exceptions, align Alembic metadata and backfill policy, and enforce concurrent idempotency.</span></div><div class="phase-body"><b>Exit evidence</b><span>Current email and dashboard tests pass; schema check is clean; repeated input produces one run and one response request.</span></div></div>
+
+    <div class="phase"><div class="phase-head"><span class="phase-n">1</span><b>Introduce initiative and evidence ownership</b><span>Registrar</span></div><div class="phase-body"><b>Change</b><span>Add the canonical initiative aggregate, thread mapping, attachment metadata, evidence items and evidence versions. Store files once by hash.</span></div><div class="phase-body"><b>Exit evidence</b><span>A reply with a PDF/Word/Excel/PowerPoint attachment resolves to one initiative and creates a new traceable evidence version.</span></div></div>
+
+    <div class="phase"><div class="phase-head"><span class="phase-n">2</span><b>Separate assessment from coaching</b><span>Reasoning boundary</span></div><div class="phase-body"><b>Change</b><span>Assessment Agent returns typed evidence findings; deterministic code maps them to the versioned rubric; Coach receives only the approved result. Keep provider/model configuration in <code>.env</code>.</span></div><div class="phase-body"><b>Exit evidence</b><span>Contract, grounding, regression and shadow evaluations meet the agreed quality threshold; model failure cannot alter official math.</span></div></div>
+
+    <div class="phase"><div class="phase-head"><span class="phase-n">3</span><b>Activate lifecycle control</b><span>StageMaster · Auditor · Pacer</span></div><div class="phase-body"><b>Change</b><span>Add current lifecycle state, proposal/decision history, HOLD/RESUME, automatic DI1–DI4 policy and scheduled stall detection.</span></div><div class="phase-body"><b>Exit evidence</b><span>Transition matrix tests prove every allowed and forbidden path; all mutations are attributed and version protected.</span></div></div>
+
+    <div class="phase"><div class="phase-head"><span class="phase-n">4</span><b>Open the governed Human Console</b><span>Security · operations</span></div><div class="phase-body"><b>Change</b><span>Add Entra roles, portfolio and initiative views, approval queue, hold/resume, sandbox, evidence timeline, delivery state and operational errors.</span></div><div class="phase-body"><b>Exit evidence</b><span>Only Animesh and Anand can access the site; unauthorized API calls fail; sandbox actions cannot touch live records.</span></div></div>
+
+    <div class="phase"><div class="phase-head"><span class="phase-n">5</span><b>Make processing event-ready</b><span>Conductor · Herald</span></div><div class="phase-body"><b>Change</b><span>Introduce transactional outbox, durable worker/scheduler boundaries, Logic App delivery callback, retries and dead-letter operations without prematurely splitting services.</span></div><div class="phase-body"><b>Exit evidence</b><span>A controlled failure can be replayed without duplicate state or email; operators see the complete correlated trace.</span></div></div>
+
+    <div class="phase"><div class="phase-head"><span class="phase-n">6</span><b>Add portfolio intelligence</b><span>Agent 3</span></div><div class="phase-body"><b>Change</b><span>Build verified SQL metrics and initiative clusters first; let the Portfolio Agent interpret only those facts and cited initiative summaries.</span></div><div class="phase-body"><b>Exit evidence</b><span>Every narrative claim links to a reproducible query or initiative set and passes human factual review.</span></div></div>
+
+    <div class="phase"><div class="phase-head"><span class="phase-n">7</span><b>Introduce Scout under review</b><span>Agent 4</span></div><div class="phase-body"><b>Change</b><span>Start with one approved source, a least-privilege connector, candidate contract, duplicate detection and accept/merge/reject queue.</span></div><div class="phase-body"><b>Exit evidence</b><span>Source-owner sign-off, privacy review and precision target pass; Scout cannot create live initiatives or send messages.</span></div></div>
+
+    <div class="phase"><div class="phase-head"><span class="phase-n">8</span><b>Complete operational lifecycle and Azure cutover</b><span>Sentinel · Realizer · platform</span></div><div class="phase-body"><b>Change</b><span>Add monitoring/value evidence, provision Azure PostgreSQL and attachment storage, enable managed identities, migrate with reconciliation and retain rollback.</span></div><div class="phase-body"><b>Exit evidence</b><span>Security, restore, observability, performance, migration and rollback rehearsals pass before production promotion.</span></div></div>
+  </section>
+
+  <section id="s12">
+    <h2><span class="num">12</span>Assurance, risks and decisions</h2>
+    <p class="lede">The restructure is complete only when architecture claims are supported by tests and operational evidence.</p>
+    <table>
+      <tr><th>Quality gate</th><th>Required proof</th></tr>
+      <tr><td>Functional correctness</td><td>Unit and integration coverage for scoring, evidence versioning, lifecycle policy, roles, idempotency and callbacks.</td></tr>
+      <tr><td>Agent quality</td><td>Versioned evaluation corpus; grounding, completeness, gate agreement, fallback and regression thresholds.</td></tr>
+      <tr><td>Data integrity</td><td>Migration checks, foreign/unique/check constraints, concurrency tests, backup and restore rehearsal.</td></tr>
+      <tr><td>Security</td><td>Token/role tests, least-privilege review, secret scan, attachment controls and negative authorization tests.</td></tr>
+      <tr><td>Operations</td><td>Correlation across intake→assessment→transition→delivery, actionable alerts and a tested replay procedure.</td></tr>
+      <tr><td>Scout governance</td><td>Approved source register, privacy/retention review, duplicate rate, reviewer precision and complete candidate audit.</td></tr>
+    </table>
+    <div class="grid2">
+      <div class="card"><h4>Decisions already locked</h4><ul class="checklist"><li class="done">Local PostgreSQL during development</li><li class="done">Azure PostgreSQL at production preparation</li><li class="done">Animesh and Anand as initial dashboard users</li><li class="done">DI1 Concept → DI5 Scale names</li><li class="done">Human authority for Scale, No-Go, Retire and override</li><li class="done">Evidence attachments supported</li><li class="done">Assessment + Coach now; Portfolio next; Scout later</li></ul></div>
+      <div class="card"><h4>Decisions needed before the relevant increment</h4><ul class="checklist"><li>Entra tenant app registrations and exact role assignments</li><li>Attachment size, retention, malware scanning and Azure storage policy</li><li>Score/confidence thresholds approved as lifecycle policy</li><li>First Scout source, owner and permissible content scope</li><li>Portfolio and Scout evaluation acceptance thresholds</li><li>Azure compute/network topology and disaster-recovery target</li></ul></div>
+    </div>
+    <div class="callout"><strong>Recommended next action:</strong> approve this architecture baseline, then execute Increment 0 only. Do not begin Scout, Portfolio Intelligence or Azure migration until the earlier exit evidence is satisfied.</div>
+  </section>
+
+  <footer>
+    Oliver architecture series · Companion to planning, Azure build and implementation documents · This document describes the target boundary and transition; ADRs record implementation-level choices.
+  </footer>
+</main>
+</body>
+</html>

@@ -11,10 +11,11 @@ import anyio
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import get_settings
 from app.logger import get_logger
-from app.routers import email_threads, health
+from app.routers import auth, commands, email_threads, health, initiatives, intelligence
 from app.utils import request_context
 
 # Get the settings
@@ -66,13 +67,25 @@ class CustomMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.ADMIN_SESSION_SECRET.get_secret_value(),
+    max_age=settings.ADMIN_SESSION_TTL_SECONDS,
+    same_site="lax",
+    https_only=settings.ENV == "production",
+)
+app.add_middleware(CustomMiddleware)
+app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Oliver-Request-Id", "X-Oliver-Process-Time"],
 )
-app.add_middleware(CustomMiddleware)
 
 app.include_router(health.router)
+app.include_router(auth.router)
+app.include_router(commands.router)
+app.include_router(initiatives.router)
+app.include_router(intelligence.router)
 app.include_router(email_threads.router)

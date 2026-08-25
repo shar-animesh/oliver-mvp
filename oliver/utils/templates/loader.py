@@ -3,8 +3,38 @@
 from importlib.resources import files
 from typing import Optional
 
+import bleach
 from jinja2 import Environment, PackageLoader, StrictUndefined, select_autoescape
 from markupsafe import Markup
+
+from utils.models import AssessmentReport
+from utils.scoring.models import CanonicalAssessment
+from utils.transition_policy.presentation import participant_transition_recommendation, remove_internal_criterion_ids
+
+_PRIORITY_BADGES = {
+    "High": ("#FDE7E9", "#B3261E"),
+    "Medium": ("#FCEFD6", "#8A5A00"),
+    "Low": ("#ECECEC", "#5F5F5F"),
+}
+
+_ALLOWED_CONTENT_TAGS = {
+    "a",
+    "br",
+    "em",
+    "h2",
+    "h3",
+    "li",
+    "ol",
+    "p",
+    "strong",
+    "table",
+    "tbody",
+    "td",
+    "th",
+    "thead",
+    "tr",
+    "ul",
+}
 
 # Load the packaged Siemens Energy logo once when this module is imported. The
 # source file contains only base64 text; strip() removes its file-ending newline
@@ -44,12 +74,80 @@ def render_oliver_email(
     preheader: Optional[str] = None,
 ) -> str:
     """Place the model-generated fragment inside the fixed brand shell."""
-    return _environment.get_template("oliver-email.jinja2.html").render(
+    sanitized_content = bleach.clean(
+        content_html,
+        tags=_ALLOWED_CONTENT_TAGS,
+        attributes={"a": ["href", "title"]},
+        protocols={"http", "https"},
+        strip=True,
+        strip_comments=True,
+    )
+    rendered = _environment.get_template("oliver-email.jinja2.html").render(
         subject=subject.strip(),
         preheader=(preheader or subject).strip(),
         logo_data_uri=_LOGO_DATA_URI,
-        # The system prompt instructs Oliver to return an HTML fragment. Markup
-        # tells Jinja that this one value is intentional HTML and must not be
-        # escaped; all ordinary template values remain autoescaped.
-        content_html=Markup(content_html),
+        # Only the allow-listed fragment is marked safe. All other template
+        # values remain subject to Jinja's automatic HTML escaping.
+        content_html=Markup(sanitized_content),
     )
+    return remove_internal_criterion_ids(rendered)
+
+
+def render_assessment_email(
+    *,
+    subject: str,
+    report: AssessmentReport,
+    assessment: CanonicalAssessment,
+    preheader: Optional[str] = None,
+) -> str:
+    """Render the branded transition report from model prose and canonical policy data."""
+    stage = assessment.current_stage
+    target_stage = assessment.transition_target
+    next_stage = target_stage
+    score_display = str(assessment.composite_score) if assessment.composite_score is not None else "—"
+    weight_note = ", ".join(f"{dimension.agent} {dimension.weight}%" for dimension in assessment.dimensions)
+    recommendation = participant_transition_recommendation(assessment)
+
+    rendered = _environment.get_template("oliver-assessment.jinja2.html").render(
+        subject=subject.strip(),
+        preheader=(preheader or subject).strip(),
+        logo_data_uri=_LOGO_DATA_URI,
+        stage_code=stage.value,
+        stage_name=stage.display_name,
+        path_heading=(f"Path to {next_stage.value} — {next_stage.display_name}" if next_stage else "Scale sustainment and value realization"),
+        score_display=score_display,
+        rating=assessment.rating,
+        gate_outcome=assessment.gate_outcome.value.replace("_", " ").title(),
+        recommendation=recommendation,
+        weight_note=weight_note,
+        position_note=report.position_note,
+        executive_summary=report.executive_summary,
+        working_well=report.working_well,
+        coaching=report.coaching_recommendations,
+        approach=report.approach_guidance,
+        opportunities=[
+            {
+                "area": opportunity.area,
+                "priority": opportunity.priority,
+                "suggestion": opportunity.suggestion,
+                "badge_bg": _PRIORITY_BADGES[opportunity.priority][0],
+                "badge_fg": _PRIORITY_BADGES[opportunity.priority][1],
+            }
+            for opportunity in report.opportunities
+        ],
+        path=report.path_forward,
+        next_steps=report.next_steps,
+        closing_note=report.closing_note,
+        dimensions=[
+            {
+                "label": dimension.dimension_label,
+                "agent": dimension.agent,
+                "state": dimension.state.value,
+                "value": dimension.value,
+                "weight": dimension.weight,
+                "summary": dimension.summary,
+            }
+            for dimension in assessment.dimensions
+        ],
+    )
+    return remove_internal_criterion_ids(rendered)

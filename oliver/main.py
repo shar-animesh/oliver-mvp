@@ -1,9 +1,9 @@
 """FastAPI application for the Oliver backend."""
 
 import time
+import tomllib
 from typing import Callable
 
-import toml
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -15,9 +15,8 @@ from utils import request_context
 settings = get_settings()
 logger = get_logger()
 
-# Load pyproject.toml
-with open("pyproject.toml", "r") as file:
-    config = toml.load(file)
+with open("pyproject.toml", "rb") as file:
+    config = tomllib.load(file)
 
 
 app = FastAPI(

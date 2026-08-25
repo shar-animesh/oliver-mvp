@@ -116,7 +116,7 @@ def get_logger():
                 "level": settings.LOGGING_LEVEL.upper(),
                 "propagate": False,
             },
-            # Suppress noisy libraries
+            # Route dependency logs through the same configured level and JSON handler.
             "httpx": {
                 "handlers": ["json_stdout"],
                 "level": settings.LOGGING_LEVEL.upper(),
@@ -129,7 +129,7 @@ def get_logger():
             },
             "sqlalchemy.engine": {
                 "handlers": ["json_stdout"],
-                "level": settings.LOGGING_LEVEL.upper(),
+                "level": "WARNING",
                 "propagate": False,
             },
         },

@@ -1,7 +1,10 @@
+# Path: app/utils/models/api/email_threads.py
+# Description: Read-only email-thread and canonical-assessment response contracts.
+
 """API response models for the read-only email-thread dashboard."""
 
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -29,6 +32,46 @@ class RelatedIdeaResponse(BaseModel):
     cosine_distance: float
 
 
+class DimensionScoreResponse(BaseModel):
+    """One traceable dimension in the canonical assessment."""
+
+    agent: str
+    dimension: str
+    dimension_label: str
+    state: str
+    value: Optional[int]
+    confidence: float
+    weight: int
+    summary: str
+    evidence: List[str]
+    gaps: List[str]
+    scored_by: str
+
+
+class CanonicalAssessmentResponse(BaseModel):
+    """Portfolio score and independent transition-readiness result."""
+
+    current_stage: str
+    composite_score: Optional[int]
+    transition_target: Optional[str]
+    recommended_next_stage: Optional[str]
+    gate_outcome: str
+    lifecycle_state: str
+    composite_confidence: Optional[float]
+    lowest_confidence_dimension: str
+    requires_human_review: bool
+    response_depth: str
+    rating: str
+    score_rationale: str
+    transition_rationale: str
+    model_version: str
+    weight_set_version: str
+    transition_policy_version: str
+    dimensions: List[DimensionScoreResponse]
+    criteria: List[Dict[str, object]]
+    created_at: datetime
+
+
 class OliverRunResponse(BaseModel):
     """One stored Oliver decision for an inbound message."""
 
@@ -36,6 +79,11 @@ class OliverRunResponse(BaseModel):
     action: Literal["SEND_EMAIL", "NO_REPLY"]
     model_name: str
     subject: Optional[str]
+    delivery_status: Optional[str]
+    delivery_attempt_count: int
+    delivery_last_error: Optional[str]
+    delivered_at: Optional[datetime]
+    assessment: Optional[CanonicalAssessmentResponse]
     related_ideas: List[RelatedIdeaResponse]
     prompt_tokens: Optional[int]
     completion_tokens: Optional[int]
@@ -50,6 +98,12 @@ class EmailThreadSummaryResponse(BaseModel):
     subject: Optional[str]
     participant_email: Optional[str]
     message_count: int
+    run_count: int
+    assessment_count: int
+    canonical_score: Optional[int]
+    di_stage: Optional[str]
+    gate_outcome: Optional[str]
+    rating: Optional[str]
     last_activity_at: datetime
 
 

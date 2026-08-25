@@ -1,6 +1,50 @@
 """Oliver database models and session helpers."""
 
 from .base import DatabaseBase, get_db
-from .schemas import EmailMessageDb, EmailThreadDb, OliverRunDb, OliverRunRelatedThreadDb
+from .schemas import (
+    AttachmentBlobDb,
+    AuditEventDb,
+    CanonicalAssessmentDb,
+    DeliveryAttemptDb,
+    DeliveryOutboxDb,
+    EmailAttachmentDb,
+    EmailMessageDb,
+    EmailThreadDb,
+    EvidenceItemDb,
+    EvidenceVersionDb,
+    EvidenceVersionItemDb,
+    InitiativeDb,
+    LifecycleTransitionDb,
+    MetricDefinitionDb,
+    MetricObservationDb,
+    OliverRunDb,
+    OliverRunRelatedThreadDb,
+    OperationalAlertDb,
+    PortfolioInsightReportDb,
+    ScoutCandidateDb,
+)
 
-__all__ = ["DatabaseBase", "EmailMessageDb", "EmailThreadDb", "OliverRunDb", "OliverRunRelatedThreadDb", "get_db"]
+__all__ = [
+    "AttachmentBlobDb",
+    "AuditEventDb",
+    "CanonicalAssessmentDb",
+    "DeliveryAttemptDb",
+    "DeliveryOutboxDb",
+    "DatabaseBase",
+    "EmailAttachmentDb",
+    "EmailMessageDb",
+    "EmailThreadDb",
+    "EvidenceItemDb",
+    "EvidenceVersionDb",
+    "EvidenceVersionItemDb",
+    "InitiativeDb",
+    "LifecycleTransitionDb",
+    "MetricDefinitionDb",
+    "MetricObservationDb",
+    "OliverRunDb",
+    "OliverRunRelatedThreadDb",
+    "OperationalAlertDb",
+    "PortfolioInsightReportDb",
+    "ScoutCandidateDb",
+    "get_db",
+]

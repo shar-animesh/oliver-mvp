@@ -3,3 +3,13 @@
 **/node_modules/
 **/.env
 **/.venv/
+**/dist/
+**/.data/
+**/.ruff_cache/
+**/.pytest_cache/
+**/*.egg-info/
+**/.coverage
+**/htmlcov/
+/.run/
+**/.ipynb_checkpoints/
+/WhatsApp Image*.jpeg

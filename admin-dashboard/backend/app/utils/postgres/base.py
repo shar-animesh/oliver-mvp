@@ -1,3 +1,6 @@
+# Path: app/utils/postgres/base.py
+# Description: Read-only SQLAlchemy session management for the admin backend.
+
 """Read-only SQLAlchemy connection used by the admin backend."""
 
 from typing import Generator

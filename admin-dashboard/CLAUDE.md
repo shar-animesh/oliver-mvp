@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Administrative dashboard for Oliver. Its backend reads Oliver-owned Azure SQL tables through a read-only database identity, and its frontend displays conversations and semantic matches.
+Administrative dashboard for Oliver. Its backend reads Oliver-owned PostgreSQL tables through a read-only database identity, and its frontend displays conversations and semantic matches.
 
 ## Projects
 

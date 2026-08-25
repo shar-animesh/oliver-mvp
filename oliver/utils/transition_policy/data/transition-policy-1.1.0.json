@@ -1,0 +1,448 @@
+{
+  "version": "transition-policy/1.1.0",
+  "extends": "transition-policy/1.0.0",
+  "transitions": {
+    "DI2": {
+      "current_stage": "DI2",
+      "target_stage": "DI3",
+      "current_stage_objective": "Run a bounded pilot that produces credible learning and prepares technical and business hypotheses for evidence-based testing.",
+      "next_stage_objective": "Validate the technical and business hypotheses with representative evidence beyond an initial controlled pilot.",
+      "human_review_always": false,
+      "criteria": [
+        {
+          "criterion_id": "DI2_DI3_PILOT_SCOPE_EXECUTED",
+          "title": "Bounded pilot executed",
+          "description": "Evidence shows that a bounded pilot was executed against the scope it was intended to test.",
+          "user_action": "complete and document the bounded pilot scope",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s1 and docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI2_DI3_DATA_ACCESS_CREDIBLE",
+          "title": "Data access credible",
+          "description": "The pilot has credible access to the data needed for the proposed test, with known limitations recorded.",
+          "user_action": "confirm the required data access and document its limitations",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI2_DI3_SPONSOR_CONFIRMED",
+          "title": "Sponsor confirmed",
+          "description": "An accountable sponsor is confirmed for the test and the decisions that follow from its evidence.",
+          "user_action": "confirm the accountable sponsor for the test",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI2_DI3_SUCCESS_CRITERIA_DEFINED",
+          "title": "Measurable success criteria defined",
+          "description": "Measurable technical and business success criteria are defined for the next test without inventing unsupported thresholds.",
+          "user_action": "define measurable technical and business success criteria",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI2_DI3_PILOT_LEARNING_EVIDENCE",
+          "title": "Pilot learning evidenced",
+          "description": "The pilot produced evidence that identifies what was learned and why a broader test is justified.",
+          "user_action": "document what the pilot demonstrated and why a broader test is justified",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s1"
+        },
+        {
+          "criterion_id": "DI2_DI3_TEST_RISK_ACCEPTABLE",
+          "title": "Risk acceptable for testing",
+          "description": "The proposed test can proceed without an identified unacceptable safety, data, compliance, or operational risk.",
+          "user_action": "complete the test-risk check and resolve any unacceptable conditions",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8 and #s9"
+        },
+        {
+          "criterion_id": "DI2_DI3_TECHNICAL_VALIDATION",
+          "title": "Technical hypothesis validation",
+          "description": "DI3 is expected to validate the technical hypothesis with representative evidence beyond the initial pilot.",
+          "user_action": "validate the technical hypothesis with representative evidence",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI2_DI3_BUSINESS_VALIDATION",
+          "title": "Business hypothesis validation",
+          "description": "DI3 is expected to validate the business or operational value hypothesis with measurable evidence.",
+          "user_action": "validate the business or operational value hypothesis with measurable evidence",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI2_DI3_BEYOND_PILOT_VALIDATION",
+          "title": "Beyond-pilot validation",
+          "description": "DI3 is expected to test whether the result holds in a representative context beyond the initial pilot conditions.",
+          "user_action": "test whether the result holds beyond the initial pilot conditions",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s1"
+        },
+        {
+          "criterion_id": "DI2_DI3_NO_FEASIBLE_TEST",
+          "title": "No feasible test design",
+          "description": "Actual evidence shows there is no bounded and feasible test capable of validating the technical and business hypotheses.",
+          "user_action": "define a bounded and feasible test design",
+          "role": "BLOCKING_CONDITION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI2_DI3_PROHIBITED_TEST_CONDITION",
+          "title": "Prohibited test condition",
+          "description": "Actual evidence identifies a safety, data, compliance, or operational prohibition that prevents the proposed test.",
+          "user_action": "resolve the condition preventing the proposed test",
+          "role": "BLOCKING_CONDITION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8 and #s9"
+        }
+      ]
+    },
+    "DI3": {
+      "current_stage": "DI3",
+      "target_stage": "DI4",
+      "current_stage_objective": "Validate the technical and business hypotheses with representative evidence and determine whether implementation is justified.",
+      "next_stage_objective": "Establish production readiness, operating ownership, controls, and deployment evidence without treating implementation as automatic scale approval.",
+      "human_review_always": false,
+      "criteria": [
+        {
+          "criterion_id": "DI3_DI4_TECHNICAL_HYPOTHESIS_VALIDATED",
+          "title": "Technical hypothesis validated",
+          "description": "Representative evidence supports the technical hypothesis and records material limitations or failure modes.",
+          "user_action": "provide representative technical results and document material limitations",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI3_DI4_BUSINESS_HYPOTHESIS_VALIDATED",
+          "title": "Business hypothesis validated",
+          "description": "Measured evidence supports the business or operational value hypothesis at the level needed to justify implementation.",
+          "user_action": "provide measured evidence for the business or operational value hypothesis",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI3_DI4_SUCCESS_CRITERIA_EVALUATED",
+          "title": "Success criteria evaluated",
+          "description": "The test results are evaluated against the previously defined measurable success criteria.",
+          "user_action": "evaluate the test results against the agreed success criteria",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI3_DI4_REPRESENTATIVE_CONTEXT",
+          "title": "Representative context tested",
+          "description": "Evidence shows whether the result holds beyond laboratory or narrowly controlled pilot conditions.",
+          "user_action": "show whether the result holds in a representative context beyond the lab",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s1"
+        },
+        {
+          "criterion_id": "DI3_DI4_IMPLEMENTATION_OWNER",
+          "title": "Implementation owner identified",
+          "description": "An accountable owner is identified for implementation and the operational decisions it creates.",
+          "user_action": "confirm an accountable implementation owner",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI3_DI4_IMPLEMENTATION_JUSTIFIED",
+          "title": "Implementation justified",
+          "description": "The combined test evidence provides a credible reason to invest in implementation while preserving known uncertainty.",
+          "user_action": "explain why the combined evidence justifies implementation",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s1 and docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI3_DI4_PRODUCTION_READINESS",
+          "title": "Production readiness established",
+          "description": "DI4 is expected to establish the technical and organizational readiness required for production operation.",
+          "user_action": "establish and evidence production readiness",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI3_DI4_OPERATING_MODEL",
+          "title": "Operating model established",
+          "description": "DI4 is expected to establish how the solution will be operated, supported, monitored, and changed.",
+          "user_action": "establish the operating, support, monitoring, and change model",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI3_DI4_PRODUCTION_CONTROLS",
+          "title": "Controls before production use",
+          "description": "Applicable safety, cybersecurity, data-governance, compliance, and operational controls must be completed before production use.",
+          "user_action": "complete the applicable controls before production use",
+          "role": "NEXT_STAGE_EXPECTATION",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": true,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8 and #s9"
+        },
+        {
+          "criterion_id": "DI3_DI4_TECHNICAL_EVIDENCE_FAILS",
+          "title": "Technical evidence does not justify implementation",
+          "description": "Actual representative evidence shows that the technical hypothesis cannot support the proposed implementation.",
+          "user_action": "address the technical evidence that does not support implementation",
+          "role": "BLOCKING_CONDITION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s7 and docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI3_DI4_BUSINESS_EVIDENCE_FAILS",
+          "title": "Business evidence does not justify implementation",
+          "description": "Actual measured evidence shows that the business or operational hypothesis cannot support the proposed implementation.",
+          "user_action": "address the business evidence that does not support implementation",
+          "role": "BLOCKING_CONDITION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s7 and docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI3_DI4_UNACCEPTABLE_IMPLEMENTATION_RISK",
+          "title": "Unacceptable implementation risk",
+          "description": "Actual evidence identifies a safety, data, compliance, or operational risk that cannot be acceptably controlled during implementation.",
+          "user_action": "resolve the unacceptable implementation risk",
+          "role": "BLOCKING_CONDITION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8 and #s9"
+        }
+      ]
+    },
+    "DI4": {
+      "current_stage": "DI4",
+      "target_stage": "DI5",
+      "current_stage_objective": "Establish production operation, controls, ownership, monitoring, and measured value evidence sufficient for a governed Scale decision.",
+      "next_stage_objective": "Operate the deployed initiative at Scale while continuously monitoring health, controls, and realized value.",
+      "human_review_always": true,
+      "criteria": [
+        {
+          "criterion_id": "DI4_DI5_PRODUCTION_OPERATION_EVIDENCED",
+          "title": "Production operation evidenced",
+          "description": "Evidence shows that the implemented solution operates in its intended production context with known limitations recorded.",
+          "user_action": "provide evidence of operation in the intended production context",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI4_DI5_OPERATIONAL_OWNER_ACTIVE",
+          "title": "Operational ownership active",
+          "description": "Accountable operational and support ownership is active for the deployed initiative.",
+          "user_action": "confirm active operational and support ownership",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI4_DI5_CONTROLS_EVIDENCED",
+          "title": "Production controls evidenced",
+          "description": "Applicable safety, cybersecurity, data-governance, compliance, and operational controls are evidenced for production operation.",
+          "user_action": "provide evidence for the applicable production controls",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8 and #s9"
+        },
+        {
+          "criterion_id": "DI4_DI5_MONITORING_ACTIVE",
+          "title": "Monitoring active",
+          "description": "Operational monitoring uses real telemetry and records relevant performance, drift, incident, and service health evidence.",
+          "user_action": "activate and evidence operational monitoring from real telemetry",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s4 and #s12; docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI4_DI5_MEASURED_VALUE",
+          "title": "Measured value evidenced",
+          "description": "Sourced measurements show the value realized by the deployed initiative rather than relying only on projections.",
+          "user_action": "provide sourced measurements of realized value",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s4 and #s12; docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI4_DI5_SCALE_CASE_CREDIBLE",
+          "title": "Scale case credible",
+          "description": "Evidence identifies where replication is appropriate, the constraints involved, and why wider use is justified.",
+          "user_action": "document where replication is appropriate and why wider use is justified",
+          "role": "ENTRY_CRITERION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s1 and #s7"
+        },
+        {
+          "criterion_id": "DI4_DI5_UNACCEPTABLE_OPERATIONAL_RISK",
+          "title": "Unacceptable operational risk",
+          "description": "Actual evidence identifies an operational, safety, data, or compliance risk that prevents responsible scaling.",
+          "user_action": "resolve the unacceptable risk preventing responsible scaling",
+          "role": "BLOCKING_CONDITION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8 and #s9"
+        },
+        {
+          "criterion_id": "DI4_DI5_VALUE_NOT_REALIZED",
+          "title": "Value is not being realized",
+          "description": "Actual sourced evidence shows that the deployed initiative is not delivering the value needed to justify scaling.",
+          "user_action": "address the evidence showing that expected value is not being realized",
+          "role": "BLOCKING_CONDITION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s4 and #s12"
+        },
+        {
+          "criterion_id": "DI4_DI5_NO_FEASIBLE_SCALE_PATH",
+          "title": "No feasible scale path",
+          "description": "Actual evidence shows that the solution cannot be responsibly replicated beyond its current implementation.",
+          "user_action": "define a feasible and responsible path for replication",
+          "role": "BLOCKING_CONDITION",
+          "timing": "REQUIRED_BEFORE_ENTRY",
+          "blocking_behavior": "BLOCK_ON_CONCERN",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s1 and #s7"
+        }
+      ]
+    }
+  },
+  "terminal_stages": {
+    "DI5": {
+      "current_stage": "DI5",
+      "stage_objective": "Keep the scaled initiative deployed, monitored, controlled, and accountable for measured value while routing retire or rollback decisions to human authority.",
+      "criteria": [
+        {
+          "criterion_id": "DI5_DI5_OPERATIONAL_HEALTH",
+          "title": "Operational health monitored",
+          "description": "Current sourced telemetry establishes the operational and service health of the scaled initiative.",
+          "user_action": "provide current sourced operational-health telemetry",
+          "role": "TERMINAL_MONITORING",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s4 and #s12; docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI5_DI5_VALUE_REALIZATION",
+          "title": "Realized value monitored",
+          "description": "Current sourced measurements compare realized value with the recorded value expectation.",
+          "user_action": "update the sourced realized-value measurements",
+          "role": "TERMINAL_MONITORING",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s4 and #s12; docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI5_DI5_CONTROLS_CURRENT",
+          "title": "Controls remain current",
+          "description": "Applicable governance, compliance, safety, data, and operational controls remain current as the initiative evolves.",
+          "user_action": "confirm that the applicable controls remain current",
+          "role": "TERMINAL_MONITORING",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s4 and #s12; docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI5_DI5_OWNERSHIP_ACTIVE",
+          "title": "Operational ownership remains active",
+          "description": "Accountable operational and support ownership remains active for the scaled initiative.",
+          "user_action": "confirm the current operational and support owners",
+          "role": "TERMINAL_MONITORING",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "docs/04-Oliver-Lifecycle-Restructure-Plan.html#s8"
+        },
+        {
+          "criterion_id": "DI5_DI5_DRIFT_INCIDENT_MANAGEMENT",
+          "title": "Drift and incidents managed",
+          "description": "Drift, threshold breaches, incidents, upgrades, and decommissioning signals are recorded and governed from real evidence.",
+          "user_action": "review and resolve outstanding drift or incident signals",
+          "role": "TERMINAL_MONITORING",
+          "timing": "REQUIRED_DURING_STAGE",
+          "blocking_behavior": "NON_BLOCKING",
+          "conditional_if_unresolved": false,
+          "source": "docs/01-Oliver-Planning(2).html#s7 and #s12"
+        }
+      ]
+    }
+  }
+}

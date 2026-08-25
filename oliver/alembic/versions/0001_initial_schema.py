@@ -12,9 +12,8 @@ Create Date: 2026-08-12 00:00:00.000000
 from typing import Optional, Sequence, Union
 
 import sqlalchemy as sa
-from pgvector.sqlalchemy import Vector
-
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 revision: str = "0001"
 down_revision: Optional[Union[str, Sequence[str]]] = None
@@ -24,7 +23,6 @@ depends_on: Optional[Union[str, Sequence[str]]] = None
 
 def upgrade() -> None:
     """Create the complete Oliver email, run, and semantic-search schema."""
-    op.execute("CREATE EXTENSION IF NOT EXISTS vector")
     op.create_table(
         "email_threads",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -32,7 +30,7 @@ def upgrade() -> None:
         sa.Column("subject", sa.String(length=998), nullable=True),
         sa.Column("participant_email", sa.String(length=320), nullable=True),
         sa.Column("semantic_text", sa.Text(), nullable=True),
-        sa.Column("embedding", Vector(1536), nullable=True),
+        sa.Column("embedding", postgresql.ARRAY(sa.Float()), nullable=True),
         sa.Column("embedding_model", sa.String(length=255), nullable=True),
         sa.Column("embedding_dimensions", sa.Integer(), nullable=True),
         sa.Column("embedded_at", sa.DateTime(timezone=True), nullable=True),

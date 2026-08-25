@@ -5,9 +5,9 @@ Oliver is one tool-using agent governed by one system prompt. The FastAPI email 
 ## Runtime flow
 
 1. `POST /api/v1/email/respond` persists the inbound message and reconstructs its complete thread.
-2. Oliver creates a `text-embedding-3-large` vector for the readable transcript and stores it with pgvector as `vector(1536)`.
-3. PostgreSQL cosine search retrieves a bounded set of similar conversations belonging to other internal participants.
-4. Oliver receives the current thread plus complete related transcripts and may recommend a relevant internal contact.
+2. Oliver creates a 1,536-dimensional `openai/text-embedding-3-small` vector by default and stores it in a native PostgreSQL array.
+3. Oliver calculates cosine distance and retrieves a bounded set of similar conversations belonging to other internal participants.
+4. Oliver receives the current thread plus bounded, de-identified context from related conversations and may identify a relevant internal pattern.
 5. The model returns parsed `OliverResponse` JSON. The endpoint wraps `SEND_EMAIL` content in the branded shell, records the run and semantic matches, and returns it to the Logic App. `NO_REPLY` records the decision without sending mail.
 
 ```python
@@ -73,7 +73,7 @@ from utils.prompts import build_system_prompt
 system_prompt = build_system_prompt(email_thread)
 ```
 
-`render_oliver_email` inserts the model-generated fragment into an autoescaped `.jinja2.html` shell. The fragment is trusted because the system prompt owns its HTML requirements; the subject and preheader remain escaped. The official white Siemens Energy logo is packaged locally and embedded into each rendered email as a base64 PNG data URI, so rendering does not request an external image.
+`render_oliver_email` sanitizes the model-generated fragment with a strict Bleach tag, attribute, and protocol allowlist before inserting it into an autoescaped `.jinja2.html` shell. The subject and preheader remain escaped. The official white Siemens Energy logo is packaged locally and embedded into each rendered email as a base64 PNG data URI, so rendering does not request an external image.
 
 ```python
 from utils.templates import render_oliver_email
@@ -99,4 +99,21 @@ uvx poetry check
 uvx poetry build
 ```
 
-The Azure deployment applies the single initial Alembic migration before the Container Apps start. New conversations are indexed as Oliver processes them, and cross-team contact discovery is limited to Siemens Energy email addresses.
+## Local PostgreSQL
+
+Create a PostgreSQL database named `oliver`, copy `.env.example` to `.env`, and set `DATABASE_URL` with your local credentials:
+
+```text
+DATABASE_URL=postgresql+psycopg://postgres:password@localhost:5432/oliver
+```
+
+Apply the schema from this directory:
+
+```bash
+uv sync
+uv run alembic upgrade head
+```
+
+The schema uses native PostgreSQL `double precision[]` values for embeddings, so a local `pgvector` extension is not required. Cosine similarity is calculated in the Oliver process, which keeps local setup simple and is appropriate for the MVP dataset size.
+
+New conversations are indexed as Oliver processes them, and cross-team contact discovery is limited to Siemens Energy email addresses.

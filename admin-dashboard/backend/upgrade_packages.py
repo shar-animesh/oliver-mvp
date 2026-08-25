@@ -15,7 +15,7 @@ Usage:
     2. Update pyproject.toml based on the new lock file
 
 Notes:
-    - Preserves dependency extras (e.g., fastapi[standard])
+    - Preserves dependency extras and environment markers
     - Updates both main dependencies and dependency groups
     - Removes duplicate version constraints
 """
@@ -24,9 +24,11 @@ import subprocess
 import sys
 import tomllib
 from pathlib import Path
-from typing import Tuple
+from typing import Dict
 
 import tomli_w
+from packaging.requirements import InvalidRequirement, Requirement
+from packaging.utils import canonicalize_name
 
 
 def run_uv_lock_update() -> bool:
@@ -56,16 +58,23 @@ def run_uv_lock_update() -> bool:
         return False
 
 
-def clean_dependency(dep: str) -> Tuple[str, str]:
-    """Clean dependency string and return package name and extras."""
-    base = dep.split(">=")[0].strip()
-
-    # Extract extras if present
-    if "[" in base:
-        pkg_name = base.split("[")[0].strip()
-        extras = "[" + base.split("[")[1]
-        return pkg_name.lower(), extras
-    return base.lower(), ""
+def update_requirement(dependency: str, versions: Dict[str, str]) -> str:
+    """Update the lower bound while preserving extras, upper bounds, exclusions, and markers."""
+    try:
+        requirement = Requirement(dependency)
+    except InvalidRequirement as error:
+        raise ValueError(f"Unsupported dependency requirement: {dependency}") from error
+    if requirement.url:
+        return dependency
+    package_name = canonicalize_name(requirement.name)
+    locked_version = versions.get(package_name)
+    if locked_version is None:
+        return dependency
+    preserved = sorted(str(specifier) for specifier in requirement.specifier if specifier.operator != ">=")
+    specifiers = ",".join([f">={locked_version}", *preserved])
+    extras = f"[{','.join(sorted(requirement.extras))}]" if requirement.extras else ""
+    marker = f"; {requirement.marker}" if requirement.marker else ""
+    return f"{package_name}{extras}{specifiers}{marker}"
 
 
 def update_dependencies(pyproject_path: Path, lock_path: Path) -> None:
@@ -81,7 +90,7 @@ def update_dependencies(pyproject_path: Path, lock_path: Path) -> None:
         versions = {}
         for i, line in enumerate(lock_content):
             if 'name = "' in line:
-                name = line.split('"')[1].lower()
+                name = canonicalize_name(line.split('"')[1])
                 if i + 1 < len(lock_content) and 'version = "' in lock_content[i + 1]:
                     versions[name] = lock_content[i + 1].split('"')[1]
         print(f"Found {len(versions)} packages in lock file")
@@ -92,29 +101,23 @@ def update_dependencies(pyproject_path: Path, lock_path: Path) -> None:
 
         if deps := pyproject.get("project", {}).get("dependencies"):
             print("\nMain dependencies:")
-            for i, dep in enumerate(deps):
-                pkg_name, extras = clean_dependency(dep)
-                if pkg_name in versions:
-                    old_dep = deps[i]
-                    new_dep = f"{pkg_name}{extras}>={versions[pkg_name]}"
-                    if old_dep != new_dep:
-                        deps[i] = new_dep
-                        print(f"  {old_dep} -> {new_dep}")
-                        updated_count += 1
+            for i, old_dep in enumerate(deps):
+                new_dep = update_requirement(old_dep, versions)
+                if old_dep != new_dep:
+                    deps[i] = new_dep
+                    print(f"  {old_dep} -> {new_dep}")
+                    updated_count += 1
 
         # Update dependency groups
         if groups := pyproject.get("dependency-groups"):
             for group_name, deps in groups.items():
                 print(f"\n{group_name} dependencies:")
-                for i, dep in enumerate(deps):
-                    pkg_name, extras = clean_dependency(dep)
-                    if pkg_name in versions:
-                        old_dep = deps[i]
-                        new_dep = f"{pkg_name}{extras}>={versions[pkg_name]}"
-                        if old_dep != new_dep:
-                            deps[i] = new_dep
-                            print(f"  {old_dep} -> {new_dep}")
-                            updated_count += 1
+                for i, old_dep in enumerate(deps):
+                    new_dep = update_requirement(old_dep, versions)
+                    if old_dep != new_dep:
+                        deps[i] = new_dep
+                        print(f"  {old_dep} -> {new_dep}")
+                        updated_count += 1
 
         # Write updated pyproject.toml
         if updated_count > 0:

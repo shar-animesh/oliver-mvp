@@ -7,8 +7,11 @@ dependencies = [
     "anyio>=4.12.1",
     "fastapi>=0.141.1",
     "gunicorn>=26.0.0",
+    "httpx>=0.28,<1.0",
+    "itsdangerous>=2.2,<3.0",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.13.1",
+    "pyjwt[crypto]>=2.10,<3.0",
     "python-dotenv>=1.2.2",
     "psycopg[binary]>=3.2,<4.0",
     "sqlalchemy>=2.0.43,<3.0",
@@ -19,6 +22,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "bump2version>=1.0.1",
+    "packaging>=25,<27",
     "ruff>=0.16.2",
     "tomli-w>=1.2.0",
 ]
