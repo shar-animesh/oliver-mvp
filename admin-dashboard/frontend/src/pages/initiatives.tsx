@@ -4,24 +4,16 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api";
+import MetricCard from "../components/metric-card";
 import { formatDate } from "../lib/format";
 import type { InitiativeSummary, IntelligenceOverview } from "../lib/models";
-
-function Metric({ label, value, note }: { label: string; value: string; note: string }) {
-    return (
-        <article className="metric-card">
-            <span>{label}</span>
-            <strong>{value}</strong>
-            <small>{note}</small>
-        </article>
-    );
-}
 
 export default function Initiatives() {
     const [initiatives, setInitiatives] = useState<InitiativeSummary[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [intelligence, setIntelligence] = useState<IntelligenceOverview | null>(null);
+    const [stageFilter, setStageFilter] = useState("ALL");
 
     useEffect(() => {
         let active = true;
@@ -56,41 +48,64 @@ export default function Initiatives() {
         };
     }, [initiatives]);
 
+    const stageSummary = useMemo(
+        () => ["DI1", "DI2", "DI3", "DI4", "DI5"].map((stage) => ({ stage, count: initiatives.filter((initiative) => initiative.current_stage === stage).length })),
+        [initiatives],
+    );
+    const visibleInitiatives = stageFilter === "ALL" ? initiatives : initiatives.filter((initiative) => initiative.current_stage === stageFilter);
+
     return (
         <section id="portfolio">
             <div className="page-intro">
                 <div>
                     <p className="eyebrow">Lifecycle portfolio</p>
-                    <h2>Authoritative initiatives</h2>
-                    <p>Current DI state, evidence maturity and governed decisions from Oliver's system of record.</p>
+                    <h2>Initiative portfolio</h2>
+                    <p>Track every initiative from concept to scale, with evidence, scores, and review decisions in one place.</p>
                 </div>
                 <div className="refresh-note">
-                    <span className="status-dot" />
-                    {loading ? "Refreshing..." : "Live data from PostgreSQL"}
+                    <span className={`status-dot${error ? " status-dot-error" : loading ? " status-dot-loading" : ""}`} />
+                    {loading ? "Refreshing…" : error ? "Data connection needs attention" : "Connected to live data"}
                 </div>
             </div>
 
             <div className="metric-grid" aria-label="Portfolio metrics">
-                <Metric label="Initiatives" value={`${initiatives.length}`} note="Canonical records" />
-                <Metric label="Active" value={`${metrics.active}`} note="Progressing through DI" />
-                <Metric label="Awaiting review" value={`${metrics.review}`} note="Human authority required" />
-                <Metric label="Average score" value={metrics.average === null ? "-" : `${metrics.average}`} note="Latest assessments" />
+                <MetricCard label="Initiatives" value={initiatives.length} note="Registered initiatives" loading={loading} tone="accent" />
+                <MetricCard label="Active" value={metrics.active} note="Currently moving" loading={loading} tone="operational" />
+                <MetricCard label="Awaiting review" value={metrics.review} note="Human authority required" loading={loading} />
+                <MetricCard label="Average score" value={metrics.average ?? "—"} note="Latest assessments" loading={loading} />
             </div>
+
+            <section className="stage-overview" aria-label="Initiative stages">
+                <div className="stage-overview-copy">
+                    <p className="eyebrow">Pilot pipeline</p>
+                    <h3>Initiative pipeline</h3>
+                    <p>Select a stage to filter the portfolio.</p>
+                </div>
+                <div className="stage-steps">
+                    {stageSummary.map(({ stage, count }) => (
+                        <button type="button" className={`stage-step${stageFilter === stage ? " selected" : ""}`} key={stage} onClick={() => setStageFilter(stageFilter === stage ? "ALL" : stage)}>
+                            <span>{stage}</span>
+                            <strong>{count}</strong>
+                            <small>{["Concept", "Pilot", "Test", "Implement", "Scale"][Number(stage.slice(-1)) - 1]}</small>
+                        </button>
+                    ))}
+                </div>
+            </section>
 
             <section className="panel initiative-panel portfolio-panel" aria-labelledby="portfolio-heading">
                 <div className="panel-heading inbox-heading">
                     <div>
                         <p className="eyebrow">Initiative register</p>
-                        <h3 id="portfolio-heading">DI1-DI5 lifecycle</h3>
-                        <p>{initiatives.length} total records</p>
+                        <h3 id="portfolio-heading">DI1–DI5 lifecycle</h3>
+                        <p>{stageFilter === "ALL" ? initiatives.length : visibleInitiatives.length} of {initiatives.length} total records</p>
                     </div>
-                    <span className="refresh-note">{metrics.held} on hold</span>
+                    <span className="refresh-note" title="Hold state is sourced from Oliver lifecycle authority. This dashboard does not change lifecycle records.">{metrics.held} on hold</span>
                 </div>
                 {error ? <p className="error-message">{error}</p> : null}
                 {!loading && !error && initiatives.length === 0 ? (
-                    <p className="empty-state">No assessed initiatives have been registered yet.</p>
+                    <p className="empty-state">No initiatives are available yet.</p>
                 ) : null}
-                {initiatives.length ? (
+                {visibleInitiatives.length ? (
                     <div className="portfolio-table">
                         <div className="portfolio-header" aria-hidden="true">
                             <span>Initiative</span>
@@ -100,7 +115,7 @@ export default function Initiatives() {
                             <span>Review</span>
                             <span>Updated</span>
                         </div>
-                        {initiatives.map((initiative) => (
+                        {visibleInitiatives.map((initiative) => (
                             <article className="portfolio-row" key={initiative.id}>
                                 <div className="initiative-cell">
                                     <span className="initiative-mark" />
@@ -136,8 +151,8 @@ export default function Initiatives() {
                 <section className="panel intelligence-panel">
                     <div className="panel-heading">
                         <div>
-                            <p className="eyebrow">Portfolio intelligence</p>
-                            <h3>Verified cross-initiative patterns</h3>
+                            <p className="eyebrow">Portfolio insights</p>
+                            <h3>Patterns across initiatives</h3>
                         </div>
                     </div>
                     {intelligence?.latest_portfolio_insight ? (
@@ -155,7 +170,7 @@ export default function Initiatives() {
                             <small>Generated {formatDate(intelligence.latest_portfolio_insight.created_at)}</small>
                         </div>
                     ) : (
-                        <p className="empty-state">No portfolio insight has been generated for the current data.</p>
+                        <p className="empty-state">No portfolio insights are available for the current data.</p>
                     )}
                 </section>
 
@@ -163,7 +178,7 @@ export default function Initiatives() {
                     <div className="panel-heading">
                         <div>
                             <p className="eyebrow">Scout</p>
-                            <h3>Governed candidate queue</h3>
+                            <h3>Candidate queue</h3>
                         </div>
                         <span className="refresh-note">{intelligence?.scout_candidates.length ?? 0} open</span>
                     </div>
@@ -179,7 +194,7 @@ export default function Initiatives() {
                             ))}
                         </div>
                     ) : (
-                        <p className="empty-state">No Scout candidates are awaiting review.</p>
+                        <p className="empty-state">No Scout candidates are waiting for review.</p>
                     )}
                 </section>
             </div>

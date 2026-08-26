@@ -9,6 +9,29 @@ import AssessmentLab from "./pages/assessment-lab";
 import EmailThreads from "./pages/email-threads";
 import Initiatives from "./pages/initiatives";
 
+type Workspace = "portfolio" | "conversations" | "assessment";
+
+const workspaceDetails: Record<Workspace, { eyebrow: string; title: string }> = {
+    portfolio: { eyebrow: "Portfolio", title: "Initiative lifecycle" },
+    conversations: { eyebrow: "Operations", title: "Conversations and assessments" },
+    assessment: { eyebrow: "Quality assurance", title: "Assessment laboratory" },
+};
+
+function workspaceFromLocation(): Workspace {
+    const candidate = new URLSearchParams(window.location.search).get("workspace");
+    return candidate === "conversations" || candidate === "assessment" ? candidate : "portfolio";
+}
+
+function identityInitials(username: string): string {
+    const name = username.split("@")[0] || username;
+    return name
+        .split(/[._\-\s]+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join("");
+}
+
 function GridIcon() {
     return (
         <svg aria-hidden="true" viewBox="0 0 20 20">
@@ -67,15 +90,36 @@ function SignIn({ onAuthenticated }: { onAuthenticated: (session: AdminSession) 
 
     return (
         <main className="signin-page">
-            <section className="signin-panel" aria-labelledby="signin-title">
+            <div className="signin-layout">
+                <section className="signin-story" aria-label="Oliver overview">
+                    <div className="signin-brand">
+                        <img
+                            className="signin-logo"
+                            src="https://www.siemens-energy.com/content/dam/siemensenergy-aem/images/logo/SE_Logo_White.png"
+                            alt="Siemens Energy"
+                        />
+                        <span className="brand-divider" aria-hidden="true" />
+                        <span className="oliver-wordmark">Oliver<small>Initiative operations</small></span>
+                    </div>
+                    <div className="signin-story-copy">
+                        <p className="eyebrow">Siemens Energy / internal workspace</p>
+                        <h1>Move every idea forward with confidence.</h1>
+                        <p>One calm view of pilots, evidence, assessments and the decisions that keep innovation moving.</p>
+                    </div>
+                    <div className="signin-story-footer">
+                        <span className="secure-indicator"><i /> Secure administrator access</span>
+                        <span>Oliver v1.0</span>
+                    </div>
+                </section>
+                <section className="signin-panel" aria-labelledby="signin-title">
                 <img
                     className="signin-logo"
                     src="https://www.siemens-energy.com/content/dam/siemensenergy-aem/images/logo/SE_Logo_White.png"
                     alt="Siemens Energy"
                 />
                 <p className="eyebrow">Oliver administration</p>
-                <h1 id="signin-title">Sign in to the lifecycle workspace</h1>
-                <p className="signin-intro">Restricted access for authorized Oliver administrators.</p>
+                <h1 id="signin-title">Welcome back</h1>
+                <p className="signin-intro">Sign in to review pilot progress, assessments and governed actions.</p>
                 {authMode === "entra" ? (
                     <div className="enterprise-signin">
                         {error ? <p className="signin-error">{error}</p> : null}
@@ -108,16 +152,33 @@ function SignIn({ onAuthenticated }: { onAuthenticated: (session: AdminSession) 
                         </button>
                     </form>
                 )}
-                <small>{authMode === "entra" ? "Access is governed by Microsoft Entra app roles." : "Local development authentication only."}</small>
+                <div className="signin-meta">
+                    <span className="secure-indicator"><i /> Encrypted session</span>
+                    <small>{authMode === "entra" ? "Access is governed by Microsoft Entra app roles." : "Local development authentication only."}</small>
+                </div>
             </section>
+            </div>
         </main>
     );
 }
 
 function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOut: () => void }) {
-    const [workspace, setWorkspace] = useState<"portfolio" | "conversations" | "assessment">("portfolio");
+    const [workspace, setWorkspace] = useState<Workspace>(workspaceFromLocation);
     const [signOutError, setSignOutError] = useState<string | null>(null);
     const canTestAssessment = session.roles.some((role) => role === "Oliver.Assessment.Test" || role === "Oliver.Platform.Admin");
+
+    useEffect(() => {
+        const syncWorkspace = () => setWorkspace(workspaceFromLocation());
+        window.addEventListener("popstate", syncWorkspace);
+        return () => window.removeEventListener("popstate", syncWorkspace);
+    }, []);
+
+    function openWorkspace(nextWorkspace: Workspace): void {
+        const url = new URL(window.location.href);
+        url.searchParams.set("workspace", nextWorkspace);
+        window.history.pushState(null, "", url);
+        setWorkspace(nextWorkspace);
+    }
 
     async function signOut() {
         setSignOutError(null);
@@ -132,6 +193,9 @@ function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOu
 
     return (
         <div className="admin-shell">
+            <a className="skip-link" href="#main-content">
+                Skip to main content
+            </a>
             <aside className="sidebar">
                 <div className="brand-lockup">
                     <img
@@ -141,24 +205,39 @@ function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOu
                     />
                     <div>
                         <strong>Oliver</strong>
-                        <small>Assessment administration</small>
+                        <small>Initiative operations</small>
                     </div>
                 </div>
 
                 <nav className="primary-nav" aria-label="Primary navigation">
                     <p className="nav-label">Workspace</p>
-                    <button type="button" className={workspace === "portfolio" ? "active" : ""} onClick={() => setWorkspace("portfolio")}>
+                    <button
+                        type="button"
+                        className={workspace === "portfolio" ? "active" : ""}
+                        aria-current={workspace === "portfolio" ? "page" : undefined}
+                        title="Portfolio"
+                        onClick={() => openWorkspace("portfolio")}>
                         <GridIcon />
-                        Portfolio
+                        <span>Portfolio</span>
                     </button>
-                    <button type="button" className={workspace === "conversations" ? "active" : ""} onClick={() => setWorkspace("conversations")}>
+                    <button
+                        type="button"
+                        className={workspace === "conversations" ? "active" : ""}
+                        aria-current={workspace === "conversations" ? "page" : undefined}
+                        title="Conversations"
+                        onClick={() => openWorkspace("conversations")}>
                         <InboxIcon />
-                        Conversations
+                        <span>Conversations</span>
                     </button>
                     {canTestAssessment ? (
-                        <button type="button" className={workspace === "assessment" ? "active" : ""} onClick={() => setWorkspace("assessment")}>
+                        <button
+                            type="button"
+                            className={workspace === "assessment" ? "active" : ""}
+                            aria-current={workspace === "assessment" ? "page" : undefined}
+                            title="Assessment lab"
+                            onClick={() => openWorkspace("assessment")}>
                             <LabIcon />
-                            Assessment lab
+                            <span>Assessment lab</span>
                         </button>
                     ) : null}
                 </nav>
@@ -171,25 +250,29 @@ function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOu
 
             <div className="workspace">
                 <header className="topbar">
-                    <div>
-                        <p className="eyebrow">Oliver administration</p>
-                        <h1>
-                            {workspace === "portfolio"
-                                ? "Initiative lifecycle"
-                                : workspace === "conversations"
-                                  ? "Conversations and assessments"
-                                  : "Assessment laboratory"}
-                        </h1>
+                    <div className="topbar-heading">
+                        <p className="eyebrow">
+                            Oliver administration <span aria-hidden="true">/</span> {workspaceDetails[workspace].eyebrow}
+                        </p>
+                        <h1>{workspaceDetails[workspace].title}</h1>
                     </div>
                     <div className="admin-identity">
-                        <span>{session.username}</span>
+                        <span className="identity-avatar" aria-hidden="true">
+                            {identityInitials(session.username)}
+                        </span>
+                        <span className="identity-copy">
+                            <strong>{session.username}</strong>
+                            <small>Authorized administrator</small>
+                        </span>
                         <button type="button" onClick={() => void signOut()}>
                             Sign out
                         </button>
                         {signOutError ? <small role="alert">{signOutError}</small> : null}
                     </div>
                 </header>
-                <main>{workspace === "portfolio" ? <Initiatives /> : workspace === "conversations" ? <EmailThreads /> : <AssessmentLab />}</main>
+                <main id="main-content" tabIndex={-1}>
+                    {workspace === "portfolio" ? <Initiatives /> : workspace === "conversations" ? <EmailThreads /> : <AssessmentLab />}
+                </main>
             </div>
         </div>
     );
@@ -209,7 +292,7 @@ export default function App() {
     }, []);
 
     if (session === undefined) {
-        return <div className="app-loading">Loading Oliver…</div>;
+        return <div className="app-loading">Loading Oliver admin…</div>;
     }
     if (session === null) {
         return <SignIn onAuthenticated={setSession} />;

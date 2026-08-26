@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Oliver Admin — Portfolio studio</title>
+        <link rel="stylesheet" href="prototype.css" />
+    </head>
+    <body class="studio">
+        <a class="skip-link" href="#main-content">Skip to main content</a>
+        <nav class="prototype-switcher" aria-label="Prototype switcher">
+            <span>Oliver admin templates</span>
+            <a href="01-command-center.html">1 Command center</a>
+            <a href="02-portfolio-studio.html" aria-current="page">2 Portfolio</a>
+            <a href="03-review-console.html">3 Review queue</a>
+            <a href="04-lifecycle-board.html">4 Lifecycle board</a>
+            <a href="05-intelligence-desk.html">5 Intelligence desk</a>
+        </nav>
+
+        <header class="studio-topbar">
+            <div class="studio-brand">
+                <i>O</i><span><strong>Oliver</strong><small>Lifecycle governance</small></span>
+            </div>
+            <nav class="studio-nav" aria-label="Primary navigation">
+                <a href="#">Overview</a><a href="#" class="active">Portfolio</a><a href="#">Assessments</a><a href="#">Intelligence</a
+                ><a href="#">Administration</a>
+            </nav>
+            <div class="profile"><span class="status-live">Live</span><span class="avatar">OA</span></div>
+        </header>
+
+        <main class="studio-page" id="main-content">
+            <section class="studio-hero">
+                <div>
+                    <p class="eyebrow">Portfolio studio</p>
+                    <h1>Move initiatives forward with evidence, policy and clear authority.</h1>
+                    <p>
+                        Compare canonical assessments without treating a score as a stage gate. Oliver keeps evidence maturity, policy outcomes and
+                        human decisions distinct.
+                    </p>
+                    <div class="page-actions" style="margin-top: 20px">
+                        <button class="solid-button" type="button" style="background: #00d77d; color: #171128; border-color: #00d77d">
+                            Review priorities
+                        </button>
+                        <button
+                            class="ghost-button"
+                            type="button"
+                            style="color: #fff; border-color: rgba(255, 255, 255, 0.28); background: transparent">
+                            Portfolio report
+                        </button>
+                    </div>
+                </div>
+                <div class="funnel" aria-label="Lifecycle funnel">
+                    <div><strong>12</strong><span>DI1 Concept</span></div>
+                    <div><strong>8</strong><span>DI2 Pilot</span></div>
+                    <div><strong>6</strong><span>DI3 Test</span></div>
+                    <div><strong>4</strong><span>DI4 Implement</span></div>
+                    <div><strong>2</strong><span>DI5 Scale</span></div>
+                </div>
+            </section>
+
+            <div class="studio-section-head">
+                <div>
+                    <h2>Priority initiatives</h2>
+                    <p>Sorted by required authority action and stage age.</p>
+                </div>
+                <div class="page-actions">
+                    <select class="filter" aria-label="Filter by lifecycle stage">
+                        <option>All stages</option>
+                        <option>DI1 · Concept</option>
+                        <option>DI2 · Pilot</option>
+                        <option>DI3 · Test</option>
+                        <option>DI4 · Implement</option>
+                        <option>DI5 · Scale</option>
+                    </select>
+                    <button class="ghost-button" type="button">View register</button>
+                </div>
+            </div>
+
+            <section class="initiative-grid" aria-label="Priority initiatives">
+                <article class="initiative-card">
+                    <div class="card-top"><span class="stage">DI4 · Implement</span><span class="score-orb">77</span></div>
+                    <h3>Grid-scale battery retrofit</h3>
+                    <p>Repurpose existing turbine-site infrastructure for modular battery storage.</p>
+                    <span class="progress"><span style="width: 78%"></span></span>
+                    <div class="card-foot"><span>Jonas Weber · 16 days</span><span class="gate conditional">Conditional</span></div>
+                </article>
+                <article class="initiative-card">
+                    <div class="card-top"><span class="stage">DI3 · Test</span><span class="score-orb">81</span></div>
+                    <h3>Hydrogen compression upgrade</h3>
+                    <p>Improve compression efficiency and reduce lifecycle operating cost.</p>
+                    <span class="progress"><span style="width: 66%"></span></span>
+                    <div class="card-foot"><span>Priya Shah · 22 days</span><span class="gate advance">Advance</span></div>
+                </article>
+                <article class="initiative-card">
+                    <div class="card-top"><span class="stage">DI2 · Pilot</span><span class="score-orb" style="background: #bd6a00">68</span></div>
+                    <h3>Wind turbine predictive maintenance</h3>
+                    <p>Use fleet telemetry to anticipate component wear before operational impact.</p>
+                    <span class="progress"><span style="width: 42%"></span></span>
+                    <div class="card-foot"><span>Amelia Hart · 31 days</span><span class="gate hold">Review</span></div>
+                </article>
+                <article class="initiative-card">
+                    <div class="card-top"><span class="stage">DI3 · Test</span><span class="score-orb">72</span></div>
+                    <h3>Heat recovery optimization</h3>
+                    <p>Model plant heat flows and optimize recovery across operating conditions.</p>
+                    <span class="progress"><span style="width: 62%"></span></span>
+                    <div class="card-foot"><span>Marco Silva · 19 days</span><span class="gate conditional">Conditional</span></div>
+                </article>
+                <article class="initiative-card">
+                    <div class="card-top"><span class="stage">DI1 · Concept</span><span class="score-orb" style="background: #006b7c">64</span></div>
+                    <h3>Substation digital twin</h3>
+                    <p>Create a high-fidelity operational model for remote planning and diagnostics.</p>
+                    <span class="progress"><span style="width: 28%"></span></span>
+                    <div class="card-foot"><span>Nina Kapoor · 8 days</span><span class="gate advance">Promising</span></div>
+                </article>
+                <article class="initiative-card">
+                    <div class="card-top"><span class="stage">DI5 · Scale</span><span class="score-orb" style="background: #007a49">86</span></div>
+                    <h3>Remote inspection robotics</h3>
+                    <p>Scale proven autonomous inspection workflows to three additional sites.</p>
+                    <span class="progress"><span style="width: 94%"></span></span>
+                    <div class="card-foot"><span>Elena Rossi · 11 days</span><span class="gate advance">Advance</span></div>
+                </article>
+            </section>
+
+            <section class="insight-band">
+                <div class="insight-summary">
+                    <p class="eyebrow" style="color: #a8e7c8">Portfolio intelligence</p>
+                    <h3>Three patterns deserve attention</h3>
+                    <p>
+                        Oliver found repeated evidence across active initiatives. Each claim links to a reproducible initiative set; these are
+                        decision aids, not automated conclusions.
+                    </p>
+                </div>
+                <div class="pattern-list">
+                    <article>
+                        <strong>Evidence quality is improving</strong
+                        ><span>Technical evidence coverage rose 14% across DI2 and DI3 initiatives.</span>
+                    </article>
+                    <article>
+                        <strong>Procurement is a recurring constraint</strong
+                        ><span>Five initiatives cite long-lead equipment as a delivery risk.</span>
+                    </article>
+                    <article>
+                        <strong>Site reuse improves viability</strong
+                        ><span>Brownfield concepts score 9 points higher on implementation readiness.</span>
+                    </article>
+                </div>
+            </section>
+        </main>
+    </body>
+</html>

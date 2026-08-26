@@ -14,6 +14,19 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDe
     const latestRun = thread.runs.at(-1);
     const assessment = latestRun?.assessment ?? null;
     const totalTokens = thread.runs.reduce((total, run) => total + (run.prompt_tokens || 0) + (run.completion_tokens || 0), 0);
+
+    function downloadHtml(content: string | null, messageId: string, subject: string | null): void {
+        if (!content) return;
+        const blob = new Blob([content], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${(subject || "oliver-reply").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase()}-${messageId.slice(0, 8)}.html`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    }
     const stageDisplay = assessment
         ? assessment.recommended_next_stage
             ? `${assessment.current_stage} → ${assessment.recommended_next_stage}`
@@ -23,7 +36,7 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDe
     return (
         <section className="detail-view" aria-labelledby="initiative-title">
             <button className="back-link" onClick={onBack}>
-                <span aria-hidden="true">←</span> Initiative inbox
+                <span aria-hidden="true">←</span> Conversation inbox
             </button>
 
             <div className="detail-heading">
@@ -32,9 +45,12 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDe
                     <h2 id="initiative-title">{thread.subject || "Untitled conversation"}</h2>
                     <p>{thread.participant_email || "Unknown participant"}</p>
                 </div>
-                <span className={`status-badge ${assessment ? "status-complete" : "status-pending"}`}>
-                    <span /> {assessment ? "Canonically assessed" : "Not scored"}
-                </span>
+                <div className="detail-heading-actions">
+                    <span className={`status-badge ${assessment ? "status-complete" : "status-pending"}`}>
+                        <span /> {assessment ? "Assessment complete" : "Not scored"}
+                    </span>
+                    <span className="detail-date">Updated {formatDate(thread.updated_at)}</span>
+                </div>
             </div>
 
             <div className="detail-grid">
@@ -101,6 +117,7 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDe
                                 <p className="eyebrow">Communication history</p>
                                 <h3>{thread.messages.length} recorded messages</h3>
                             </div>
+                            <span className="refresh-note">{thread.runs.length} Oliver processing run{thread.runs.length === 1 ? "" : "s"}</span>
                         </div>
                         <div className="message-list">
                             {thread.messages.map((message) => (
@@ -109,9 +126,20 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDe
                                         <div className="avatar avatar-small">{initials(message.sender_email)}</div>
                                         <div>
                                             <strong>{message.direction === "INBOUND" ? message.sender_email || "Sender" : "Oliver"}</strong>
-                                            <small>{message.direction === "INBOUND" ? "Participant" : "Oliver reply"}</small>
+                                            <small>{message.direction === "INBOUND" ? "Participant" : "Oliver response"}</small>
                                         </div>
-                                        <time>{formatDate(message.received_at)}</time>
+                                        <div className="message-actions">
+                                            <time>{formatDate(message.received_at)}</time>
+                                            {message.direction === "OUTBOUND" && message.content_html ? (
+                                                <button
+                                                    type="button"
+                                                    className="download-button"
+                                                    onClick={() => downloadHtml(message.content_html, message.id, message.subject || thread.subject)}
+                                                    title="Download this Oliver reply as HTML">
+                                                    Download HTML
+                                                </button>
+                                            ) : null}
+                                        </div>
                                     </div>
                                     <iframe
                                         className="message-frame"
@@ -128,8 +156,8 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDe
                         <section className="panel related-panel">
                             <div className="panel-heading">
                                 <div>
-                                    <p className="eyebrow">Semantic matches</p>
-                                    <h3>Related conversations used by Oliver</h3>
+                                        <p className="eyebrow">Related conversations</p>
+                                        <h3>Conversations used as context</h3>
                                 </div>
                             </div>
                             {thread.runs.flatMap((run) =>
@@ -149,17 +177,19 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDe
 
                 <aside className="detail-rail">
                     <section className="panel assessment-card">
-                        <p className="eyebrow">Canonical assessment</p>
+                        <p className="eyebrow">Assessment summary</p>
                         <div className="score-summary">
                             <strong>{assessment?.composite_score ?? "—"}</strong>
                             <span>
                                 <b>{assessment?.rating || "Not scored"}</b>
-                                <small>{assessment ? `${stageDisplay} · ${assessment.lifecycle_state}` : "No canonical score for this thread"}</small>
+                            <small>{assessment ? `${stageDisplay} · ${assessment.lifecycle_state}` : "No overall score for this conversation"}</small>
                             </span>
                         </div>
-                        <p className="assessment-copy">
-                            {assessment ? assessment.transition_rationale : "Oliver recorded no canonical assessment for this conversation."}
-                        </p>
+                        <div className="assessment-readout">
+                            <span className="readout-label">Executive readout</span>
+                            <p>{assessment ? assessment.score_rationale || assessment.transition_rationale : "Oliver has not recorded an assessment for this conversation yet."}</p>
+                        </div>
+                        {assessment ? <p className="assessment-copy">{assessment.transition_rationale}</p> : null}
                         {assessment && (
                             <dl className="record-list">
                                 <div>
@@ -193,7 +223,7 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDe
                     </section>
 
                     <section className="panel">
-                        <p className="eyebrow">Run record</p>
+                        <p className="eyebrow">Processing record</p>
                         <dl className="record-list">
                             <div>
                                 <dt>Delivery action</dt>

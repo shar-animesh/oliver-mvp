@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "../api";
+import MetricCard from "../components/metric-card";
 import { formatDate, formatGate, initials } from "../lib/format";
 import type { EmailThreadDetail, EmailThreadSummary } from "../lib/models";
 import ThreadDetail from "./thread-detail";
@@ -29,7 +30,7 @@ export default function EmailThreads() {
     const filteredThreads = useMemo(() => {
         const normalizedQuery = query.trim().toLowerCase();
         return threads.filter((thread) => {
-            const matchesStatus = statusFilter === "all" || (statusFilter === "scored" ? thread.assessment_count > 0 : thread.assessment_count === 0);
+            const matchesStatus = statusFilter === "all" || (statusFilter === "scored" ? thread.canonical_score !== null : thread.canonical_score === null);
             const matchesQuery =
                 !normalizedQuery ||
                 [thread.subject, thread.participant_email, thread.conversation_id].some((value) => value?.toLowerCase().includes(normalizedQuery));
@@ -38,13 +39,13 @@ export default function EmailThreads() {
     }, [query, statusFilter, threads]);
 
     const messageCount = threads.reduce((total, thread) => total + thread.message_count, 0);
-    const scoredCount = threads.filter((thread) => thread.assessment_count > 0).length;
+    const scoredCount = threads.filter((thread) => thread.canonical_score !== null).length;
     const gatePasses = threads.filter((thread) => ["ADVANCE", "CONDITIONAL_ADVANCE"].includes(thread.gate_outcome || "")).length;
     const scoredThreads = threads.filter((thread) => thread.canonical_score !== null);
     const averageScore =
         scoredThreads.length === 0
             ? null
-            : Math.round(scoredThreads.reduce((total, thread) => total + (thread.canonical_score || 0), 0) / scoredThreads.length);
+            : Math.round(scoredThreads.reduce((total, thread) => total + (thread.canonical_score ?? 0), 0) / scoredThreads.length);
 
     async function openThread(threadId: string): Promise<void> {
         const requestId = ++detailRequestId.current;
@@ -77,36 +78,25 @@ export default function EmailThreads() {
             <section className="page-intro">
                 <div>
                     <p className="eyebrow">Conversations</p>
-                    <h2>Oliver assessments</h2>
-                    <p>Inspect inbound ideas, Oliver&apos;s canonical assessments, and the supporting communication record.</p>
+                    <h2>Conversation review</h2>
+                    <p>Review incoming ideas, Oliver&apos;s assessments, and the full message history.</p>
                 </div>
                 <div className="refresh-note">
-                    <span className="status-dot" />
-                    Live data from PostgreSQL
+                    <span className={`status-dot${error ? " status-dot-error" : loading ? " status-dot-loading" : ""}`} />
+                    {loading ? "Refreshing…" : error ? "Data connection needs attention" : "Connected to live data"}
                 </div>
             </section>
 
             <section className="metric-grid" aria-label="Assessment summary">
-                <article className="metric-card metric-accent">
-                    <span>Conversations</span>
-                    <strong>{threads.length}</strong>
-                    <small>{messageCount} messages recorded</small>
-                </article>
-                <article className="metric-card">
-                    <span>Scored responses</span>
-                    <strong>{scoredCount}</strong>
-                    <small>Runs with a canonical assessment</small>
-                </article>
-                <article className="metric-card">
-                    <span>Average canonical score</span>
-                    <strong>{averageScore ?? "—"}</strong>
-                    <small>{averageScore === null ? "No scored conversations" : "Across scored conversations"}</small>
-                </article>
-                <article className="metric-card">
-                    <span>Advance outcomes</span>
-                    <strong>{gatePasses}</strong>
-                    <small>Recommended to advance</small>
-                </article>
+                <MetricCard label="Conversations" value={threads.length} note={`${messageCount} messages recorded`} loading={loading} tone="accent" />
+                <MetricCard label="Scored conversations" value={scoredCount} note="With an overall score" loading={loading} />
+                <MetricCard
+                    label="Average overall score"
+                    value={averageScore ?? "—"}
+                    note={averageScore === null ? "No scored conversations" : "Across scored conversations"}
+                    loading={loading}
+                />
+                <MetricCard label="Recommended advances" value={gatePasses} note="Ready for the next stage" loading={loading} tone="operational" />
             </section>
 
             <section className="panel initiative-panel" id="initiative-inbox">
@@ -156,7 +146,7 @@ export default function EmailThreads() {
                     <div className="empty-state">
                         <div className="empty-icon">•••</div>
                         <h4>Loading conversation records</h4>
-                        <p>Connecting to the Oliver administration API.</p>
+                        <p>Connecting to the Oliver admin service.</p>
                     </div>
                 ) : filteredThreads.length === 0 && !error ? (
                     <div className="empty-state">
@@ -199,7 +189,7 @@ export default function EmailThreads() {
                                     {thread.di_stage || "—"}
                                 </span>
                                 <span role="cell">
-                                    <span className={`status-badge ${thread.assessment_count > 0 ? "status-complete" : "status-pending"}`}>
+                                    <span className={`status-badge ${thread.canonical_score !== null ? "status-complete" : "status-pending"}`}>
                                         <span /> {formatGate(thread.gate_outcome)}
                                     </span>
                                 </span>

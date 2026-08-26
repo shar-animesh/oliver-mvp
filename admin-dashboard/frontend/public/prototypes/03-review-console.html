@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Oliver Admin — Review console</title>
+        <link rel="stylesheet" href="prototype.css" />
+    </head>
+    <body>
+        <a class="skip-link" href="#main-content">Skip to decision detail</a>
+        <nav class="prototype-switcher" aria-label="Prototype switcher">
+            <span>Oliver admin templates</span>
+            <a href="01-command-center.html">1 Command center</a>
+            <a href="02-portfolio-studio.html">2 Portfolio</a>
+            <a href="03-review-console.html" aria-current="page">3 Review queue</a>
+            <a href="04-lifecycle-board.html">4 Lifecycle board</a>
+            <a href="05-intelligence-desk.html">5 Intelligence desk</a>
+        </nav>
+
+        <div class="review-shell">
+            <aside class="icon-rail" aria-label="Primary navigation">
+                <span class="brand-mark">O</span>
+                <a href="01-command-center.html" aria-label="Command center">▦</a>
+                <a href="02-portfolio-studio.html" aria-label="Portfolio">◎</a>
+                <a href="03-review-console.html" class="active" aria-label="Review queue" aria-current="page">✓</a>
+                <a href="04-lifecycle-board.html" aria-label="Lifecycle board">⇄</a>
+                <a href="05-intelligence-desk.html" aria-label="Intelligence">△</a>
+            </aside>
+
+            <aside class="review-list">
+                <div class="review-list-head">
+                    <p class="eyebrow">Authority workspace</p>
+                    <h1>Review queue</h1>
+                    <input class="search-box" type="search" placeholder="Search initiatives" aria-label="Search initiatives" />
+                </div>
+                <div class="review-tabs">
+                    <button class="active" type="button">Open 7</button><button type="button">Due today 3</button
+                    ><button type="button">Completed</button>
+                </div>
+
+                <article class="review-row active">
+                    <div class="review-row-top"><span class="stage">DI4 gate</span><span class="risk medium">Medium</span></div>
+                    <h3>Grid-scale battery retrofit</h3>
+                    <p>Jonas Weber · Technical authority</p>
+                    <div class="review-row-foot"><span>12 evidence items</span><strong>Due today</strong></div>
+                </article>
+                <article class="review-row">
+                    <div class="review-row-top"><span class="stage">DI3 gate</span><span class="risk high">High</span></div>
+                    <h3>Hydrogen compression upgrade</h3>
+                    <p>Priya Shah · Finance authority</p>
+                    <div class="review-row-foot"><span>9 evidence items</span><strong>Due today</strong></div>
+                </article>
+                <article class="review-row">
+                    <div class="review-row-top"><span class="stage">DI3 assessment</span><span class="risk medium">Medium</span></div>
+                    <h3>Heat recovery optimization</h3>
+                    <p>Marco Silva · Technical authority</p>
+                    <div class="review-row-foot"><span>15 evidence items</span><strong>Due tomorrow</strong></div>
+                </article>
+                <article class="review-row">
+                    <div class="review-row-top"><span class="stage">Risk exception</span><span class="risk low">Low</span></div>
+                    <h3>Substation digital twin</h3>
+                    <p>Nina Kapoor · Data authority</p>
+                    <div class="review-row-foot"><span>6 evidence items</span><strong>Due Friday</strong></div>
+                </article>
+            </aside>
+
+            <main class="review-detail" id="main-content">
+                <header class="review-detail-bar">
+                    <div>
+                        <p class="eyebrow">DI4 / Authority decision</p>
+                        <h2>Grid-scale battery retrofit</h2>
+                    </div>
+                    <div class="page-actions">
+                        <button class="ghost-button" type="button">Request evidence</button
+                        ><button class="solid-button" type="button">Record decision</button>
+                    </div>
+                </header>
+
+                <div class="review-detail-body">
+                    <section class="assessment-summary">
+                        <div class="score-dial-wrap">
+                            <div class="score-dial" aria-label="Canonical score 77 out of 100"><span>77</span></div>
+                        </div>
+                        <div class="assessment-copy">
+                            <p class="eyebrow">Canonical assessment · Version 4</p>
+                            <h3>Scale decision requires two resolved conditions</h3>
+                            <p>
+                                The canonical score supports portfolio comparison, but it does not authorize a stage move. The DI4 → DI5 policy
+                                requires current production-operation evidence and measured value before an authorized reviewer can approve Scale.
+                            </p>
+                            <div class="page-actions" style="margin-top: 16px">
+                                <span class="gate conditional">Human review required</span><span class="count-chip">Confidence 86%</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="dimension-grid" aria-label="Assessment dimensions">
+                        <article class="dimension">
+                            <div class="dimension-head"><strong>Strategic value</strong><strong>88</strong></div>
+                            <span class="progress"><span style="width: 88%"></span></span>
+                            <p>Directly supports grid flexibility and existing site utilization objectives.</p>
+                        </article>
+                        <article class="dimension">
+                            <div class="dimension-head"><strong>Technical feasibility</strong><strong>74</strong></div>
+                            <span class="progress"><span style="width: 74%"></span></span>
+                            <p>Core technology is proven; connection study assumptions need refresh.</p>
+                        </article>
+                        <article class="dimension">
+                            <div class="dimension-head"><strong>Idea quality</strong><strong>71</strong></div>
+                            <span class="progress"><span style="width: 71%"></span></span>
+                            <p>Revenue model is plausible but sensitive to supplier and capacity pricing.</p>
+                        </article>
+                        <article class="dimension">
+                            <div class="dimension-head"><strong>Execution readiness</strong><strong>76</strong></div>
+                            <span class="progress"><span style="width: 76%"></span></span>
+                            <p>Site access and core team are secured; long-lead procurement remains open.</p>
+                        </article>
+                        <article class="dimension">
+                            <div class="dimension-head"><strong>Idea completeness</strong><strong>79</strong></div>
+                            <span class="progress"><span style="width: 79%"></span></span>
+                            <p>The problem, solution, operating owner and intended production context are clearly recorded.</p>
+                        </article>
+                    </section>
+
+                    <section class="evidence-strip" aria-label="Evidence summary">
+                        <article><strong>12 evidence items</strong><span>10 verified · 2 require refresh</span></article>
+                        <article><strong>4 assessment runs</strong><span>Canonical run completed 2 hours ago</span></article>
+                        <article><strong>2 material conditions</strong><span>Grid connection · supplier lead time</span></article>
+                    </section>
+
+                    <section class="panel" style="margin-top: 16px">
+                        <div class="panel-head">
+                            <div>
+                                <p class="eyebrow">Evidence register</p>
+                                <h3>Sources supporting this decision</h3>
+                            </div>
+                            <span class="count-chip">12 documents</span>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <caption class="visually-hidden">
+                                    Evidence sources supporting the selected lifecycle decision
+                                </caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Evidence</th>
+                                        <th scope="col">Type</th>
+                                        <th scope="col">Owner</th>
+                                        <th scope="col">Freshness</th>
+                                        <th scope="col">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="initiative">
+                                            <strong>Battery retrofit feasibility study</strong><small>EV-00921 · Version 3</small>
+                                        </td>
+                                        <td>Technical report</td>
+                                        <td>Jonas Weber</td>
+                                        <td>18 days</td>
+                                        <td><span class="risk low">Verified</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="initiative"><strong>Grid connection capacity model</strong><small>EV-00887 · Version 2</small></td>
+                                        <td>Simulation</td>
+                                        <td>Asha Mehta</td>
+                                        <td>97 days</td>
+                                        <td><span class="risk medium">Refresh</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="initiative"><strong>Supplier market engagement</strong><small>EV-00918 · Version 1</small></td>
+                                        <td>Commercial</td>
+                                        <td>Peter Lang</td>
+                                        <td>41 days</td>
+                                        <td><span class="risk medium">Conditional</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </body>
+</html>

@@ -40,18 +40,18 @@ export default function AssessmentLab() {
         <section className="assessment-lab">
             <div className="page-intro">
                 <div>
-                    <p className="eyebrow">Governed sandbox</p>
+                    <p className="eyebrow">Assessment sandbox</p>
                     <h2>Assessment laboratory</h2>
                     <p>Evaluate draft evidence without creating an initiative, assessment record, or lifecycle decision.</p>
                 </div>
-                <span className="lab-safety">Non-persistent</span>
+                    <span className="lab-safety">No records created</span>
             </div>
 
             <div className="lab-layout">
                 <form className="panel lab-form" onSubmit={submit}>
                     <div className="panel-heading">
                         <div>
-                            <p className="eyebrow">Test input</p>
+                            <p className="eyebrow">Assessment input</p>
                             <h3>Initiative evidence</h3>
                         </div>
                     </div>
@@ -97,14 +97,14 @@ export default function AssessmentLab() {
                     <div className="panel-heading">
                         <div>
                             <p className="eyebrow">Policy output</p>
-                            <h3>Deterministic result</h3>
+                            <h3>Policy result</h3>
                         </div>
                     </div>
                     {result ? (
                         <>
                             <div className="lab-scoreline">
                                 <div>
-                                    <span>Canonical score</span>
+                                    <span>Overall score</span>
                                     <strong>{result.composite_score ?? "Incomplete"}</strong>
                                 </div>
                                 <div>
@@ -118,6 +118,10 @@ export default function AssessmentLab() {
                                         {result.recommended_next_stage ? ` → ${result.recommended_next_stage}` : ""}
                                     </strong>
                                 </div>
+                            </div>
+                            <div className="lab-executive">
+                                <span className="readout-label">Executive summary</span>
+                                <p>{result.score_rationale || result.transition_rationale}</p>
                             </div>
                             <p className="lab-rationale">{result.transition_rationale}</p>
                             <div className="panel-heading">
@@ -171,7 +175,7 @@ export default function AssessmentLab() {
                     ) : (
                         <div className="empty-state lab-empty">
                             <div className="empty-icon">01</div>
-                            <h4>No test result yet</h4>
+                            <h4>No result yet</h4>
                             <p>The model interprets evidence. Versioned policy keeps portfolio scoring separate from transition readiness.</p>
                         </div>
                     )}

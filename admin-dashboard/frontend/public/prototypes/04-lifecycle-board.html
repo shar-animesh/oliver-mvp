@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Oliver Admin — Lifecycle board</title>
+        <link rel="stylesheet" href="prototype.css" />
+    </head>
+    <body class="board-page">
+        <a class="skip-link" href="#main-content">Skip to lifecycle board</a>
+        <nav class="prototype-switcher" aria-label="Template switcher">
+            <span>Oliver admin templates</span>
+            <a href="01-command-center.html">1 Command center</a>
+            <a href="02-portfolio-studio.html">2 Portfolio</a>
+            <a href="03-review-console.html">3 Review queue</a>
+            <a href="04-lifecycle-board.html" aria-current="page">4 Lifecycle board</a>
+            <a href="05-intelligence-desk.html">5 Intelligence desk</a>
+        </nav>
+
+        <header class="board-topbar">
+            <div class="studio-brand">
+                <i>O</i>
+                <div>
+                    <strong>Oliver</strong>
+                    <small>Innovation portfolio</small>
+                </div>
+            </div>
+            <div class="page-actions">
+                <button type="button">Filter portfolio</button>
+                <button type="button">Export view</button>
+                <span class="avatar">AM</span>
+            </div>
+        </header>
+
+        <section class="board-toolbar">
+            <div>
+                <p class="eyebrow">Lifecycle overview</p>
+                <h1>Portfolio progression board</h1>
+            </div>
+            <div class="board-summary" aria-label="Portfolio summary">
+                <div><strong>18</strong><span>Active</span></div>
+                <div><strong>€14.2M</strong><span>Value tracked</span></div>
+                <div><strong>4</strong><span>Need attention</span></div>
+            </div>
+        </section>
+
+        <main class="board" id="main-content">
+            <section class="board-column">
+                <header class="column-head">
+                    <div><strong>DI1 · Concept</strong><small>Frame the opportunity</small></div>
+                    <span class="column-count">4</span>
+                </header>
+                <div class="column-cards">
+                    <article class="board-card">
+                        <span class="stage">ENERGY</span>
+                        <h3>Heat recovery optimization</h3>
+                        <p>Map waste-heat sources across three production lines.</p>
+                        <footer class="board-card-foot"><span>Updated 2h ago</span><i class="mini-avatar">SK</i></footer>
+                    </article>
+                    <article class="board-card">
+                        <span class="stage">SERVICE</span>
+                        <h3>Remote inspection robotics</h3>
+                        <p>Validate access constraints and customer pain points.</p>
+                        <footer class="board-card-foot"><span>3 evidence items</span><i class="mini-avatar">JW</i></footer>
+                    </article>
+                    <article class="board-card">
+                        <span class="stage">GRID</span>
+                        <h3>Flexible load orchestration</h3>
+                        <p>Opportunity sizing with Nordic utility partners.</p>
+                        <footer class="board-card-foot"><span>Due Friday</span><i class="mini-avatar">LT</i></footer>
+                    </article>
+                </div>
+            </section>
+
+            <section class="board-column">
+                <header class="column-head">
+                    <div><strong>DI2 · Pilot</strong><small>Run a bounded pilot</small></div>
+                    <span class="column-count">5</span>
+                </header>
+                <div class="column-cards">
+                    <article class="board-card">
+                        <span class="stage">HYDROGEN</span>
+                        <h3>Hydrogen compression upgrade</h3>
+                        <p>Business case review with the compression engineering team.</p>
+                        <footer class="board-card-foot"><span>78% confidence</span><i class="mini-avatar">AM</i></footer>
+                    </article>
+                    <article class="board-card">
+                        <span class="risk">NEEDS EVIDENCE</span>
+                        <h3>Substation digital twin</h3>
+                        <p>Confirm data availability before solution design begins.</p>
+                        <footer class="board-card-foot"><span>2 open questions</span><i class="mini-avatar">PK</i></footer>
+                    </article>
+                    <article class="board-card">
+                        <span class="stage">WIND</span>
+                        <h3>Blade circularity service</h3>
+                        <p>Define the first viable recycling partner network.</p>
+                        <footer class="board-card-foot"><span>Updated yesterday</span><i class="mini-avatar">NR</i></footer>
+                    </article>
+                </div>
+            </section>
+
+            <section class="board-column">
+                <header class="column-head">
+                    <div><strong>DI3 · Test</strong><small>Validate the hypotheses</small></div>
+                    <span class="column-count">4</span>
+                </header>
+                <div class="column-cards">
+                    <article class="board-card">
+                        <span class="stage">STORAGE</span>
+                        <h3>Grid-scale battery retrofit</h3>
+                        <p>Pilot integration is on track at the Erlangen test site.</p>
+                        <footer class="board-card-foot"><span>Gate review in 6d</span><i class="mini-avatar">CB</i></footer>
+                    </article>
+                    <article class="board-card">
+                        <span class="stage">AI / WIND</span>
+                        <h3>Predictive turbine maintenance</h3>
+                        <p>Model precision reached 84% across the validation fleet.</p>
+                        <footer class="board-card-foot"><span>12 experiments</span><i class="mini-avatar">MS</i></footer>
+                    </article>
+                </div>
+            </section>
+
+            <section class="board-column">
+                <header class="column-head">
+                    <div><strong>DI4 · Implement</strong><small>Establish production readiness</small></div>
+                    <span class="column-count">3</span>
+                </header>
+                <div class="column-cards">
+                    <article class="board-card">
+                        <span class="stage">INDUSTRY</span>
+                        <h3>Plant energy command center</h3>
+                        <p>Rolling out to the second lighthouse customer this month.</p>
+                        <footer class="board-card-foot"><span>€2.8M potential</span><i class="mini-avatar">EV</i></footer>
+                    </article>
+                    <article class="board-card">
+                        <span class="risk">AT RISK</span>
+                        <h3>Low-carbon process steam</h3>
+                        <p>Procurement delay puts the customer milestone at risk.</p>
+                        <footer class="board-card-foot"><span>Decision required</span><i class="mini-avatar">RH</i></footer>
+                    </article>
+                </div>
+            </section>
+
+            <section class="board-column">
+                <header class="column-head">
+                    <div><strong>DI5 · Scale</strong><small>Monitor health and realized value</small></div>
+                    <span class="column-count">2</span>
+                </header>
+                <div class="column-cards">
+                    <article class="board-card">
+                        <span class="stage">MOBILITY</span>
+                        <h3>Depot charging optimizer</h3>
+                        <p>Commercialized in four markets with a repeatable playbook.</p>
+                        <footer class="board-card-foot"><span>€5.4M realized</span><i class="mini-avatar">AD</i></footer>
+                    </article>
+                    <article class="board-card">
+                        <span class="stage">BUILDINGS</span>
+                        <h3>Adaptive HVAC controls</h3>
+                        <p>Scale package approved for the global sales organization.</p>
+                        <footer class="board-card-foot"><span>21 customers</span><i class="mini-avatar">TM</i></footer>
+                    </article>
+                </div>
+            </section>
+        </main>
+    </body>
+</html>

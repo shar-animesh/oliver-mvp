@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Oliver Admin — Command center</title>
+        <link rel="stylesheet" href="prototype.css" />
+    </head>
+    <body>
+        <a class="skip-link" href="#main-content">Skip to main content</a>
+        <nav class="prototype-switcher" aria-label="Prototype switcher">
+            <span>Oliver admin templates</span>
+            <a href="01-command-center.html" aria-current="page">1 Command center</a>
+            <a href="02-portfolio-studio.html">2 Portfolio</a>
+            <a href="03-review-console.html">3 Review queue</a>
+            <a href="04-lifecycle-board.html">4 Lifecycle board</a>
+            <a href="05-intelligence-desk.html">5 Intelligence desk</a>
+        </nav>
+
+        <div class="shell">
+            <aside class="rail">
+                <div class="brand">
+                    <span class="brand-mark">O</span>
+                    <span><strong>Oliver</strong><small>Initiative intelligence</small></span>
+                </div>
+                <p class="rail-label">Workspace</p>
+                <nav aria-label="Primary navigation">
+                    <a href="01-command-center.html" class="active" data-icon="▦" aria-current="page">Command center</a>
+                    <a href="02-portfolio-studio.html" data-icon="◎">Portfolio</a>
+                    <a href="#" data-icon="⇄">Conversations</a>
+                    <a href="03-review-console.html" data-icon="✓">Review queue</a>
+                    <a href="#" data-icon="△">Assessment lab</a>
+                </nav>
+                <p class="rail-label">Intelligence</p>
+                <nav aria-label="Intelligence navigation">
+                    <a href="05-intelligence-desk.html" data-icon="↗">Portfolio patterns</a>
+                    <a href="#" data-icon="◇">Scout candidates</a>
+                </nav>
+                <div class="rail-note">
+                    <strong>Platform healthy</strong>
+                    Assessment engine online<br />Last sync 2 minutes ago
+                </div>
+            </aside>
+
+            <div class="app">
+                <header class="appbar">
+                    <div>
+                        <p class="eyebrow">Oliver administration / Operations</p>
+                        <h1>Command center</h1>
+                    </div>
+                    <div class="profile">
+                        <span class="status-live">PostgreSQL live</span>
+                        <span class="avatar">OA</span>
+                        <span class="profile-copy"><strong>oliver.admin@siemens-energy.com</strong><small>Platform administrator</small></span>
+                        <button class="ghost-button" type="button">Sign out</button>
+                    </div>
+                </header>
+
+                <main class="page" id="main-content">
+                    <div class="page-head">
+                        <div>
+                            <p class="eyebrow">Wednesday, 26 August</p>
+                            <h2>Good morning, Oliver team</h2>
+                            <p>Prioritized operational work across the initiative lifecycle, reviews and assessment activity.</p>
+                        </div>
+                        <div class="page-actions">
+                            <button class="ghost-button" type="button">Export snapshot</button>
+                            <a class="solid-button button-link" href="03-review-console.html">Open review queue</a>
+                        </div>
+                    </div>
+
+                    <section class="metric-row" aria-label="Portfolio metrics">
+                        <article class="metric violet">
+                            <span>Active initiatives</span><strong>24</strong><small>Across DI1–DI5</small><b class="delta">+3 this month</b>
+                        </article>
+                        <article class="metric amber"><span>Awaiting authority</span><strong>7</strong><small>3 require action today</small></article>
+                        <article class="metric green">
+                            <span>Average score</span><strong>74</strong><small>Up 4 points this quarter</small><b class="delta">↑ 5.7%</b>
+                        </article>
+                        <article class="metric"><span>Median stage age</span><strong>18d</strong><small>Target is below 21 days</small></article>
+                    </section>
+
+                    <div class="grid-main">
+                        <section class="panel">
+                            <div class="panel-head">
+                                <div>
+                                    <p class="eyebrow">Portfolio register</p>
+                                    <h3>Initiatives needing attention</h3>
+                                </div>
+                                <span class="count-chip">6 prioritized</span>
+                            </div>
+                            <div class="table-wrap">
+                                <table>
+                                    <caption class="visually-hidden">
+                                        Initiatives prioritized for administrator attention
+                                    </caption>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Initiative</th>
+                                            <th scope="col">Stage</th>
+                                            <th scope="col">Score</th>
+                                            <th scope="col">Risk</th>
+                                            <th scope="col">Owner</th>
+                                            <th scope="col">Age</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="initiative"><strong>Hydrogen compression upgrade</strong><small>DI-2026-0142</small></td>
+                                            <td><span class="stage">DI3</span></td>
+                                            <td class="score">81</td>
+                                            <td><span class="risk medium">Medium</span></td>
+                                            <td>Priya Shah</td>
+                                            <td>22d</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="initiative"><strong>Grid-scale battery retrofit</strong><small>DI-2026-0098</small></td>
+                                            <td><span class="stage">DI4</span></td>
+                                            <td class="score">77</td>
+                                            <td><span class="risk low">Low</span></td>
+                                            <td>Jonas Weber</td>
+                                            <td>16d</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="initiative">
+                                                <strong>Wind turbine predictive maintenance</strong><small>DI-2026-0171</small>
+                                            </td>
+                                            <td><span class="stage">DI2</span></td>
+                                            <td class="score">68</td>
+                                            <td><span class="risk high">High</span></td>
+                                            <td>Amelia Hart</td>
+                                            <td>31d</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="initiative"><strong>Heat recovery optimization</strong><small>DI-2026-0115</small></td>
+                                            <td><span class="stage">DI3</span></td>
+                                            <td class="score">72</td>
+                                            <td><span class="risk medium">Medium</span></td>
+                                            <td>Marco Silva</td>
+                                            <td>19d</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="initiative"><strong>Substation digital twin</strong><small>DI-2026-0184</small></td>
+                                            <td><span class="stage">DI1</span></td>
+                                            <td class="score">64</td>
+                                            <td><span class="risk low">Low</span></td>
+                                            <td>Nina Kapoor</td>
+                                            <td>8d</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <div class="side-stack">
+                            <section class="panel">
+                                <div class="panel-head">
+                                    <div>
+                                        <p class="eyebrow">Authority queue</p>
+                                        <h3>Reviews due</h3>
+                                    </div>
+                                    <span class="count-chip">7 open</span>
+                                </div>
+                                <article class="queue-item">
+                                    <span class="queue-index">01</span
+                                    ><span><strong>Grid-scale battery retrofit</strong><small>DI4 → DI5 decision · 12 evidence items</small></span
+                                    ><time>Today</time>
+                                </article>
+                                <article class="queue-item">
+                                    <span class="queue-index">02</span
+                                    ><span><strong>Hydrogen compression upgrade</strong><small>Risk exception · finance authority</small></span
+                                    ><time>Today</time>
+                                </article>
+                                <article class="queue-item">
+                                    <span class="queue-index">03</span
+                                    ><span><strong>Heat recovery optimization</strong><small>DI3 assessment · technical authority</small></span
+                                    ><time>Tomorrow</time>
+                                </article>
+                            </section>
+
+                            <section class="panel">
+                                <div class="panel-head">
+                                    <div>
+                                        <p class="eyebrow">Lifecycle health</p>
+                                        <h3>Stage distribution</h3>
+                                    </div>
+                                </div>
+                                <article class="activity-item">
+                                    <span class="queue-index">D1</span
+                                    ><span
+                                        ><strong>Concept</strong><small>8 initiatives</small
+                                        ><span class="progress"><span style="width: 76%"></span></span></span
+                                    ><time>33%</time>
+                                </article>
+                                <article class="activity-item">
+                                    <span class="queue-index">D2</span
+                                    ><span
+                                        ><strong>Pilot</strong><small>6 initiatives</small
+                                        ><span class="progress"><span style="width: 58%"></span></span></span
+                                    ><time>25%</time>
+                                </article>
+                                <article class="activity-item">
+                                    <span class="queue-index">D3</span
+                                    ><span
+                                        ><strong>Test</strong><small>5 initiatives</small
+                                        ><span class="progress"><span style="width: 46%"></span></span></span
+                                    ><time>21%</time>
+                                </article>
+                                <article class="activity-item">
+                                    <span class="queue-index">D4</span
+                                    ><span
+                                        ><strong>Implement</strong><small>3 initiatives</small
+                                        ><span class="progress"><span style="width: 30%"></span></span></span
+                                    ><time>13%</time>
+                                </article>
+                                <article class="activity-item">
+                                    <span class="queue-index">D5</span
+                                    ><span
+                                        ><strong>Scale</strong><small>2 initiatives</small
+                                        ><span class="progress"><span style="width: 20%"></span></span></span
+                                    ><time>8%</time>
+                                </article>
+                            </section>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </body>
+</html>
