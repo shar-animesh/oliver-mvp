@@ -7,6 +7,7 @@ import { api, configureAccessTokenProvider, type AdminSession } from "./api";
 import { authMode, getAccessToken, initializeAuthentication, signInWithEntra, signOutFromEntra } from "./auth";
 import AssessmentLab from "./pages/assessment-lab";
 import EmailThreads from "./pages/email-threads";
+import InitiativeDetail from "./pages/initiative-detail";
 import Initiatives from "./pages/initiatives";
 
 type Workspace = "portfolio" | "conversations" | "assessment";
@@ -20,6 +21,10 @@ const workspaceDetails: Record<Workspace, { eyebrow: string; title: string }> = 
 function workspaceFromLocation(): Workspace {
     const candidate = new URLSearchParams(window.location.search).get("workspace");
     return candidate === "conversations" || candidate === "assessment" ? candidate : "portfolio";
+}
+
+function queryValue(name: string): string | null {
+    return new URLSearchParams(window.location.search).get(name);
 }
 
 function identityInitials(username: string): string {
@@ -164,20 +169,40 @@ function SignIn({ onAuthenticated }: { onAuthenticated: (session: AdminSession) 
 
 function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOut: () => void }) {
     const [workspace, setWorkspace] = useState<Workspace>(workspaceFromLocation);
+    const [initiativeId, setInitiativeId] = useState<string | null>(() => queryValue("initiative"));
+    const [threadId, setThreadId] = useState<string | null>(() => queryValue("thread"));
     const [signOutError, setSignOutError] = useState<string | null>(null);
     const canTestAssessment = session.roles.some((role) => role === "Oliver.Assessment.Test" || role === "Oliver.Platform.Admin");
 
     useEffect(() => {
-        const syncWorkspace = () => setWorkspace(workspaceFromLocation());
+        const syncWorkspace = () => {
+            setWorkspace(workspaceFromLocation());
+            setInitiativeId(queryValue("initiative"));
+            setThreadId(queryValue("thread"));
+        };
         window.addEventListener("popstate", syncWorkspace);
         return () => window.removeEventListener("popstate", syncWorkspace);
     }, []);
 
-    function openWorkspace(nextWorkspace: Workspace): void {
+    function openWorkspace(nextWorkspace: Workspace, options: { initiativeId?: string; threadId?: string } = {}): void {
         const url = new URL(window.location.href);
         url.searchParams.set("workspace", nextWorkspace);
+        if (options.initiativeId) url.searchParams.set("initiative", options.initiativeId);
+        else url.searchParams.delete("initiative");
+        if (options.threadId) url.searchParams.set("thread", options.threadId);
+        else url.searchParams.delete("thread");
         window.history.pushState(null, "", url);
         setWorkspace(nextWorkspace);
+        setInitiativeId(options.initiativeId || null);
+        setThreadId(options.threadId || null);
+    }
+
+    function openInitiative(id: string): void {
+        openWorkspace("portfolio", { initiativeId: id });
+    }
+
+    function openThread(id: string): void {
+        openWorkspace("conversations", { threadId: id });
     }
 
     async function signOut() {
@@ -271,7 +296,13 @@ function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOu
                     </div>
                 </header>
                 <main id="main-content" tabIndex={-1}>
-                    {workspace === "portfolio" ? <Initiatives /> : workspace === "conversations" ? <EmailThreads /> : <AssessmentLab />}
+                    {workspace === "portfolio" ? (
+                        initiativeId ? <InitiativeDetail key={initiativeId} initiativeId={initiativeId} onBack={() => openWorkspace("portfolio")} onOpenThread={openThread} /> : <Initiatives onOpenInitiative={openInitiative} />
+                    ) : workspace === "conversations" ? (
+                        <EmailThreads key={threadId || "conversation-inbox"} initialThreadId={threadId} onOpenInitiative={openInitiative} />
+                    ) : (
+                        <AssessmentLab />
+                    )}
                 </main>
             </div>
         </div>

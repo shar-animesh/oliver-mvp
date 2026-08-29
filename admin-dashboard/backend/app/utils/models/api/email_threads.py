@@ -94,6 +94,8 @@ class EmailThreadSummaryResponse(BaseModel):
     """Compact thread information displayed in the inbox list."""
 
     id: UUID
+    initiative_id: Optional[UUID]
+    initiative_title: Optional[str]
     conversation_id: str
     subject: Optional[str]
     participant_email: Optional[str]
@@ -102,6 +104,9 @@ class EmailThreadSummaryResponse(BaseModel):
     assessment_count: int
     canonical_score: Optional[int]
     di_stage: Optional[str]
+    assessment_stage: Optional[str]
+    initiative_current_stage: Optional[str]
+    initiative_lifecycle_state: Optional[str]
     gate_outcome: Optional[str]
     rating: Optional[str]
     last_activity_at: datetime
@@ -111,6 +116,10 @@ class EmailThreadDetailResponse(BaseModel):
     """Complete communication history and Oliver decisions for a thread."""
 
     id: UUID
+    initiative_id: Optional[UUID]
+    initiative_title: Optional[str]
+    initiative_current_stage: Optional[str]
+    initiative_lifecycle_state: Optional[str]
     conversation_id: str
     subject: Optional[str]
     participant_email: Optional[str]

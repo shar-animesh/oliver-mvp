@@ -8,7 +8,11 @@ import MetricCard from "../components/metric-card";
 import { formatDate } from "../lib/format";
 import type { InitiativeSummary, IntelligenceOverview } from "../lib/models";
 
-export default function Initiatives() {
+interface InitiativesProps {
+    onOpenInitiative: (initiativeId: string) => void;
+}
+
+export default function Initiatives({ onOpenInitiative }: InitiativesProps) {
     const [initiatives, setInitiatives] = useState<InitiativeSummary[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -72,7 +76,7 @@ export default function Initiatives() {
                 <MetricCard label="Initiatives" value={initiatives.length} note="Registered initiatives" loading={loading} tone="accent" />
                 <MetricCard label="Active" value={metrics.active} note="Currently moving" loading={loading} tone="operational" />
                 <MetricCard label="Awaiting review" value={metrics.review} note="Human authority required" loading={loading} />
-                <MetricCard label="Average score" value={metrics.average ?? "—"} note="Latest assessments" loading={loading} />
+                <MetricCard label="Average overall score" value={metrics.average ?? "—"} note={metrics.average === null ? "No complete scores" : "Across complete scores"} loading={loading} />
             </div>
 
             <section className="stage-overview" aria-label="Initiative stages">
@@ -116,7 +120,12 @@ export default function Initiatives() {
                             <span>Updated</span>
                         </div>
                         {visibleInitiatives.map((initiative) => (
-                            <article className="portfolio-row" key={initiative.id}>
+                            <button
+                                className="portfolio-row"
+                                key={initiative.id}
+                                type="button"
+                                onClick={() => onOpenInitiative(initiative.id)}
+                                title="Open pilot detail">
                                 <div className="initiative-cell">
                                     <span className="initiative-mark" />
                                     <span>
@@ -129,8 +138,8 @@ export default function Initiatives() {
                                     <small>{initiative.stage_name}</small>
                                 </div>
                                 <div className="portfolio-score">
-                                    <strong>{initiative.latest_score ?? "-"}</strong>
-                                    <small>{initiative.latest_rating || "Not scored"}</small>
+                                    <strong>{initiative.latest_score ?? (initiative.latest_assessment_at ? "Incomplete" : "Not assessed")}</strong>
+                                    <small>{initiative.latest_rating || (initiative.latest_assessment_at ? "Evidence required" : "No assessment yet")}</small>
                                 </div>
                                 <div>
                                     <strong>{initiative.evidence_version_count}</strong>
@@ -141,7 +150,7 @@ export default function Initiatives() {
                                     <small>{initiative.is_on_hold ? "On hold" : initiative.lifecycle_state}</small>
                                 </div>
                                 <time dateTime={initiative.updated_at}>{formatDate(initiative.updated_at)}</time>
-                            </article>
+                            </button>
                         ))}
                     </div>
                 ) : null}

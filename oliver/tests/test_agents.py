@@ -74,6 +74,21 @@ class AssessmentAgentTests(unittest.TestCase):
         )
         self.assertIsNone(result)
 
+    def test_forwarded_history_without_new_evidence_does_not_trigger_reassessment(self) -> None:
+        result = self.agent.assess(
+            AssessmentRequest(
+                subject="Fwd: Predictive maintenance AI assessment",
+                latest_message_html=(
+                    "<p>For awareness, please see the earlier message.</p>"
+                    "<p>---------- Forwarded message ---------</p>"
+                    "<p>From: Oliver</p><p>New accuracy result: 99%</p>"
+                ),
+                inbound_messages_html=("<p>Earlier initiative evidence.</p>",),
+                has_previous_assessment=True,
+            )
+        )
+        self.assertIsNone(result)
+
     def test_new_evidence_reassesses_the_accumulated_history(self) -> None:
         original = """
         <p>Unplanned turbine downtime costs 2M EUR per year.</p>

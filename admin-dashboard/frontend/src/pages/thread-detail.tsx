@@ -8,12 +8,15 @@ interface ThreadDetailProps {
     thread: EmailThreadDetail;
     onBack: () => void;
     onOpenRelated: (threadId: string) => void;
+    onOpenInitiative: (initiativeId: string) => void;
 }
 
-export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDetailProps) {
+export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInitiative }: ThreadDetailProps) {
     const latestRun = thread.runs.at(-1);
     const assessment = latestRun?.assessment ?? null;
     const totalTokens = thread.runs.reduce((total, run) => total + (run.prompt_tokens || 0) + (run.completion_tokens || 0), 0);
+    const scoredDimensionCount = assessment?.dimensions.filter((dimension) => dimension.value !== null).length ?? 0;
+    const unknownDimensions = assessment?.dimensions.filter((dimension) => dimension.value === null).map((dimension) => dimension.dimension_label) ?? [];
 
     function downloadHtml(content: string | null, messageId: string, subject: string | null): void {
         if (!content) return;
@@ -47,11 +50,30 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDe
                 </div>
                 <div className="detail-heading-actions">
                     <span className={`status-badge ${assessment ? "status-complete" : "status-pending"}`}>
-                        <span /> {assessment ? "Assessment complete" : "Not scored"}
+                        <span /> {assessment ? (assessment.composite_score !== null ? "Score complete" : "Assessment recorded") : "Not assessed"}
                     </span>
                     <span className="detail-date">Updated {formatDate(thread.updated_at)}</span>
                 </div>
             </div>
+
+            {thread.initiative_id ? (
+                <button className="pilot-context" type="button" onClick={() => onOpenInitiative(thread.initiative_id as string)}>
+                    <span>
+                        <small>Linked pilot</small>
+                        <strong>{thread.initiative_title || "Open pilot detail"}</strong>
+                    </span>
+                    <span>
+                        {thread.initiative_current_stage || "Stage unavailable"} · {thread.initiative_lifecycle_state || "State unavailable"} <span aria-hidden="true">→</span>
+                    </span>
+                </button>
+            ) : (
+                <div className="pilot-context pilot-context-unlinked">
+                    <span>
+                        <small>Pilot linkage</small>
+                        <strong>No initiative is linked to this conversation yet.</strong>
+                    </span>
+                </div>
+            )}
 
             <div className="detail-grid">
                 <div className="detail-main">
@@ -179,10 +201,14 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDe
                     <section className="panel assessment-card">
                         <p className="eyebrow">Assessment summary</p>
                         <div className="score-summary">
-                            <strong>{assessment?.composite_score ?? "—"}</strong>
+                            <strong>{assessment?.composite_score ?? (assessment ? "Incomplete" : "—")}</strong>
                             <span>
                                 <b>{assessment?.rating || "Not scored"}</b>
-                            <small>{assessment ? `${stageDisplay} · ${assessment.lifecycle_state}` : "No overall score for this conversation"}</small>
+                            <small>
+                                {assessment
+                                    ? `${scoredDimensionCount}/${assessment.dimensions.length} dimensions scored · ${stageDisplay} · ${assessment.lifecycle_state}`
+                                    : "No assessment recorded for this conversation"}
+                            </small>
                             </span>
                         </div>
                         <div className="assessment-readout">
@@ -193,7 +219,11 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDe
                         {assessment && (
                             <dl className="record-list">
                                 <div>
-                                    <dt>DI stage</dt>
+                                    <dt>Pilot stage</dt>
+                                    <dd>{thread.initiative_current_stage || "Not linked"}</dd>
+                                </div>
+                                <div>
+                                    <dt>Assessment stage</dt>
                                     <dd>{stageDisplay}</dd>
                                 </div>
                                 <div>
@@ -210,6 +240,12 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated }: ThreadDe
                                     <dt>Lowest confidence</dt>
                                     <dd>{dimensionLabel(assessment.dimensions, assessment.lowest_confidence_dimension)}</dd>
                                 </div>
+                                {unknownDimensions.length ? (
+                                    <div>
+                                        <dt>Score gaps</dt>
+                                        <dd>{unknownDimensions.join(", ")}</dd>
+                                    </div>
+                                ) : null}
                                 <div>
                                     <dt>Human review</dt>
                                     <dd>{assessment.requires_human_review ? "Required" : "Not required"}</dd>

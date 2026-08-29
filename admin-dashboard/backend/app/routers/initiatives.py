@@ -79,6 +79,12 @@ def _summary_rows(database: Session, initiative_id: Optional[UUID] = None) -> Li
     statement = (
         select(
             InitiativeDb,
+            select(EmailThreadDb.id)
+            .where(EmailThreadDb.initiative_id == InitiativeDb.id)
+            .order_by(EmailThreadDb.updated_at.desc(), EmailThreadDb.id.desc())
+            .limit(1)
+            .correlate(InitiativeDb)
+            .scalar_subquery(),
             func.coalesce(evidence_counts.c.evidence_version_count, 0),
             func.coalesce(review_counts.c.pending_review_count, 0),
             latest_assessment.c.composite_score,
@@ -100,10 +106,11 @@ def _summary_rows(database: Session, initiative_id: Optional[UUID] = None) -> Li
 
 
 def _to_summary(row: Row) -> InitiativeSummaryResponse:
-    initiative, evidence_count, review_count, score, gate, rating, assessed_at = row
+    initiative, primary_thread_id, evidence_count, review_count, score, gate, rating, assessed_at = row
     days_in_stage = max(0, (datetime.now(timezone.utc) - initiative.stage_entered_at).days)
     return InitiativeSummaryResponse(
         id=initiative.id,
+        primary_thread_id=primary_thread_id,
         title=initiative.title,
         owner_email=initiative.owner_email,
         current_stage=initiative.current_stage,
@@ -141,7 +148,13 @@ def get_initiative(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Initiative not found")
     summary = _to_summary(rows[0])
     initiative = rows[0][0]
-    threads = list(database.scalars(select(EmailThreadDb).where(EmailThreadDb.initiative_id == initiative_id)))
+    threads = list(
+        database.scalars(
+            select(EmailThreadDb)
+            .where(EmailThreadDb.initiative_id == initiative_id)
+            .order_by(EmailThreadDb.updated_at.desc(), EmailThreadDb.id.desc())
+        )
+    )
     assessments = list(
         database.scalars(
             select(CanonicalAssessmentDb)

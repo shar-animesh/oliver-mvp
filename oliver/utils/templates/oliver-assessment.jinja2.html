@@ -8,11 +8,6 @@
     <title>{{ subject }}</title>
     <style type="text/css">
         h2, h3 { color: #007E89 !important; }
-        [style*="#4D217A"] { color: #007E89 !important; border-color: #007E89 !important; }
-        [style*="#8A00E5"] { color: #00A9CE !important; border-color: #00A9CE !important; }
-        [style*="#1B1534"] { color: #09263A !important; }
-        [style*="#F7F2FD"] { background-color: #E3F6F8 !important; }
-        [style*="#4D217A"][bgcolor] { background-color: #007E89 !important; color: #FFFFFF !important; }
     </style>
 </head>
 <body style="margin:0;padding:0;background-color:#F2F2F2;">
@@ -37,10 +32,10 @@
                         <td align="center" bgcolor="#0D3348" style="padding:26px 30px;background-color:#0D3348;background-image:linear-gradient(135deg,#10445C 0%,#09263A 100%);text-align:center;">
                             <div style="font-size:26px;line-height:1;">🌱</div>
                             <div style="margin-top:12px;font-size:21px;line-height:1.25;font-weight:700;color:#FFFFFF;">Stage: {{ stage_code }} — {{ stage_name }}</div>
-                            <div style="margin-top:8px;font-size:15px;line-height:1.3;color:#E4D9F5;">Overall Score: {{ score_display }} · Rating: {{ rating }}</div>
+                            <div style="margin-top:8px;font-size:15px;line-height:1.3;color:#DDF4F7;">Overall Score: {{ score_display }} · {{ score_status }} · Rating: {{ rating }}</div>
                             <div style="margin-top:8px;font-size:15px;line-height:1.3;font-weight:700;color:#FFFFFF;">Transition outcome: {{ gate_outcome }}</div>
                             {% if position_note %}
-                            <div style="margin-top:12px;font-size:12.5px;line-height:1.5;color:#C9BCE8;">{{ position_note }}</div>
+                            <div style="margin-top:12px;font-size:12.5px;line-height:1.5;color:#B9EAF0;">{{ position_note }}</div>
                             {% endif %}
                         </td>
                     </tr>
@@ -48,18 +43,18 @@
                     <tr>
                         <td align="left" style="padding:28px 30px 12px;font-family:'Segoe UI',Roboto,Arial,sans-serif;color:#1B1B1B;">
 
-                            <h2 style="margin:0 0 10px;font-size:18px;line-height:1.3;font-weight:700;color:#4D217A;">📋 Executive Summary</h2>
+                            <h2 style="margin:0 0 10px;font-size:18px;line-height:1.3;font-weight:700;color:#007E89;">📋 Executive Summary</h2>
                             <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#1B1B1B;">{{ executive_summary }}</p>
-                            <div style="margin:0 0 22px;padding:12px 14px;background-color:#F7F2FD;border-left:4px solid #8A00E5;font-size:14px;line-height:1.55;color:#32175A;">
+                            <div style="margin:0 0 22px;padding:12px 14px;background-color:#E3F6F8;border-left:4px solid #00A9CE;font-size:14px;line-height:1.55;color:#063B55;">
                                 <p style="margin:0;"><strong>Recommendation:</strong> {{ recommendation.label }}</p>
                                 <p style="margin:5px 0 0;">{{ recommendation.detail }}</p>
                             </div>
 
                             {% if working_well %}
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0 0 22px;background-color:#E9F7EF;border-left:4px solid #14DA79;border-radius:6px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0 0 22px;background-color:#F2F8D9;border-left:4px solid #8FB800;border-radius:6px;">
                                 <tr><td style="padding:16px 18px;">
-                                    <h3 style="margin:0 0 10px;font-size:16px;line-height:1.3;font-weight:700;color:#08643D;">✅ What&rsquo;s Working Well</h3>
-                                    <ul style="margin:0;padding-left:20px;color:#1B3A2A;">
+                                    <h3 style="margin:0 0 10px;font-size:16px;line-height:1.3;font-weight:700;color:#4E6500;">✅ What&rsquo;s Working Well</h3>
+                                    <ul style="margin:0;padding-left:20px;color:#274900;">
                                         {% for item in working_well %}<li style="margin:0 0 7px;font-size:14.5px;line-height:1.6;">{{ item }}</li>{% endfor %}
                                     </ul>
                                 </td></tr>
@@ -67,14 +62,14 @@
                             {% endif %}
 
                             {% if coaching %}
-                            <h2 style="margin:0 0 12px;font-size:18px;line-height:1.3;font-weight:700;color:#4D217A;">💡 Coaching Recommendations</h2>
+                            <h2 style="margin:0 0 12px;font-size:18px;line-height:1.3;font-weight:700;color:#007E89;">💡 Coaching Recommendations</h2>
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin:0 0 22px;">
                                 {% for item in coaching %}
                                 <tr>
-                                    <td valign="top" style="width:26px;padding:0 8px 14px 0;font-size:14.5px;font-weight:700;color:#8A00E5;">{{ loop.index }}.</td>
+                                    <td valign="top" style="width:26px;padding:0 8px 14px 0;font-size:14.5px;font-weight:700;color:#00A9CE;">{{ loop.index }}.</td>
                                     <td valign="top" style="padding:0 0 14px;font-size:14.5px;line-height:1.6;color:#1B1B1B;">
-                                        <strong style="color:#1B1534;">{{ item.title }}</strong> — {{ item.detail }}
-                                        {% if item.example %}<div style="margin-top:6px;padding:9px 12px;background-color:#F7F2FD;border-radius:5px;font-size:13.5px;color:#4D217A;">{{ item.example }}</div>{% endif %}
+                                        <strong style="color:#09263A;">{{ item.title }}</strong> — {{ item.detail }}
+                                        {% if item.example %}<div style="margin-top:6px;padding:9px 12px;background-color:#E3F6F8;border-radius:5px;font-size:13.5px;color:#007E89;">{{ item.example }}</div>{% endif %}
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -82,15 +77,15 @@
                             {% endif %}
 
                             {% if approach %}
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0 0 22px;background-color:#EEF2FA;border-left:4px solid #4D6FB3;border-radius:6px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0 0 22px;background-color:#E8F7FA;border-left:4px solid #007F9F;border-radius:6px;">
                                 <tr><td style="padding:16px 18px;">
-                                    <h3 style="margin:0 0 12px;font-size:16px;line-height:1.3;font-weight:700;color:#243B66;">🤖 AI Approach Guidance</h3>
-                                    <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#4D6FB3;">Problem type</p>
-                                    <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#1B2A44;">{{ approach.problem_type }}</p>
-                                    <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#4D6FB3;">Recommended approach</p>
-                                    <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#1B2A44;">{{ approach.recommended_approach }}</p>
-                                    <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#4D6FB3;">What to do first</p>
-                                    <p style="margin:0;font-size:14px;line-height:1.6;color:#1B2A44;">{{ approach.what_to_do_first }}</p>
+                                    <h3 style="margin:0 0 12px;font-size:16px;line-height:1.3;font-weight:700;color:#075B78;">🤖 AI Approach Guidance</h3>
+                                    <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#007F9F;">Problem type</p>
+                                    <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#073A52;">{{ approach.problem_type }}</p>
+                                    <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#007F9F;">Recommended approach</p>
+                                    <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#073A52;">{{ approach.recommended_approach }}</p>
+                                    <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#007F9F;">What to do first</p>
+                                    <p style="margin:0;font-size:14px;line-height:1.6;color:#073A52;">{{ approach.what_to_do_first }}</p>
                                 </td></tr>
                             </table>
                             {% endif %}
@@ -118,61 +113,61 @@
                             {% endif %}
 
                             {% if path %}
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0 0 22px;background-color:#EAF1F8;border-left:4px solid #2E6FB3;border-radius:6px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0 0 22px;background-color:#E3F6F8;border-left:4px solid #007E89;border-radius:6px;">
                                 <tr><td style="padding:16px 18px;">
-                                    <h3 style="margin:0 0 8px;font-size:16px;line-height:1.3;font-weight:700;color:#1B4576;">🎯 {{ path_heading }}</h3>
-                                    {% if path.timeline %}<p style="margin:0 0 10px;font-size:14px;line-height:1.6;color:#1B2A44;"><strong>Target timeline:</strong> {{ path.timeline }}</p>{% endif %}
-                                    <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#1B4576;">Key milestones:</p>
-                                    <ol style="margin:0;padding-left:20px;color:#1B2A44;">
+                                    <h3 style="margin:0 0 8px;font-size:16px;line-height:1.3;font-weight:700;color:#075B78;">🎯 {{ path_heading }}</h3>
+                                    {% if path.timeline %}<p style="margin:0 0 10px;font-size:14px;line-height:1.6;color:#073A52;"><strong>Target timeline:</strong> {{ path.timeline }}</p>{% endif %}
+                                    <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#075B78;">Key milestones:</p>
+                                    <ol style="margin:0;padding-left:20px;color:#073A52;">
                                         {% for milestone in path.milestones %}<li style="margin:0 0 7px;font-size:14px;line-height:1.6;">{{ milestone }}</li>{% endfor %}
                                     </ol>
                                 </td></tr>
                             </table>
                             {% endif %}
 
-                            <h2 style="margin:0 0 6px;font-size:18px;line-height:1.3;font-weight:700;color:#4D217A;">📊 Assessment Score Breakdown</h2>
-                            <p style="margin:0 0 12px;font-size:12px;line-height:1.5;color:#5F5F5F;">Weight set applied: {{ stage_code }} · {{ weight_note }}</p>
+                            <h2 style="margin:0 0 6px;font-size:18px;line-height:1.3;font-weight:700;color:#007E89;">📊 Assessment Score Breakdown</h2>
+                            <p style="margin:0 0 12px;font-size:12px;line-height:1.5;color:#5F5F5F;">Weight set applied: {{ stage_code }} · {{ weight_note }}{% if score_display == "Incomplete" %}. Complete the missing dimensions before using an overall score.{% endif %}</p>
                             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin:0 0 6px;">
                                 <tr>
-                                    <th align="left" style="padding:9px 10px;border-bottom:2px solid #4D217A;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#4D217A;">Dimension</th>
-                                    <th align="left" style="padding:9px 10px;border-bottom:2px solid #4D217A;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#4D217A;">Score</th>
-                                    <th align="left" style="padding:9px 10px;border-bottom:2px solid #4D217A;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#4D217A;">Weight</th>
-                                    <th align="left" style="padding:9px 10px;border-bottom:2px solid #4D217A;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#4D217A;">Assessment</th>
+                                    <th align="left" style="padding:9px 10px;border-bottom:2px solid #007E89;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#007E89;">Dimension</th>
+                                    <th align="left" style="padding:9px 10px;border-bottom:2px solid #007E89;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#007E89;">Score</th>
+                                    <th align="left" style="padding:9px 10px;border-bottom:2px solid #007E89;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#007E89;">Weight</th>
+                                    <th align="left" style="padding:9px 10px;border-bottom:2px solid #007E89;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#007E89;">Assessment</th>
                                 </tr>
                                 {% for dimension in dimensions %}
                                 <tr>
-                                    <td valign="top" style="padding:11px 10px;border-bottom:1px solid #ECECEC;font-size:13.5px;line-height:1.45;color:#1B1534;font-weight:600;">{{ dimension.label }}<br><span style="font-size:11px;font-weight:400;color:#8A8A8A;">{{ dimension.agent }}</span></td>
+                                    <td valign="top" style="padding:11px 10px;border-bottom:1px solid #ECECEC;font-size:13.5px;line-height:1.45;color:#09263A;font-weight:600;">{{ dimension.label }}<br><span style="font-size:11px;font-weight:400;color:#8A8A8A;">{{ dimension.agent }}</span></td>
                                     <td valign="top" style="padding:11px 10px;border-bottom:1px solid #ECECEC;font-size:13.5px;color:#1B1B1B;white-space:nowrap;">{% if dimension.value is not none %}{{ dimension.value }}/100{% else %}{{ dimension.state | replace('_', ' ') | title }}{% endif %}</td>
                                     <td valign="top" style="padding:11px 10px;border-bottom:1px solid #ECECEC;font-size:13.5px;color:#1B1B1B;">{{ dimension.weight }}%</td>
                                     <td valign="top" style="padding:11px 10px;border-bottom:1px solid #ECECEC;font-size:13px;line-height:1.5;color:#4A4A4A;">{{ dimension.summary }}</td>
                                 </tr>
                                 {% endfor %}
                                 <tr>
-                                    <td bgcolor="#4D217A" style="padding:11px 10px;background-color:#4D217A;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#FFFFFF;">Weighted Total</td>
-                                    <td bgcolor="#4D217A" style="padding:11px 10px;background-color:#4D217A;font-size:13.5px;font-weight:700;color:#FFFFFF;white-space:nowrap;">{{ score_display }}</td>
-                                    <td bgcolor="#4D217A" style="padding:11px 10px;background-color:#4D217A;font-size:13.5px;font-weight:700;color:#FFFFFF;">100%</td>
-                                    <td bgcolor="#4D217A" style="padding:11px 10px;background-color:#4D217A;font-size:13.5px;font-weight:700;color:#FFFFFF;">{{ rating }}</td>
+                                    <td bgcolor="#007E89" style="padding:11px 10px;background-color:#007E89;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#FFFFFF;">Weighted Total</td>
+                                    <td bgcolor="#007E89" style="padding:11px 10px;background-color:#007E89;font-size:13.5px;font-weight:700;color:#FFFFFF;white-space:nowrap;">{{ score_display }}</td>
+                                    <td bgcolor="#007E89" style="padding:11px 10px;background-color:#007E89;font-size:13.5px;font-weight:700;color:#FFFFFF;">100%</td>
+                                    <td bgcolor="#007E89" style="padding:11px 10px;background-color:#007E89;font-size:13.5px;font-weight:700;color:#FFFFFF;">{{ rating }}</td>
                                 </tr>
                             </table>
 
-                            {% if next_steps %}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:22px 0;background-color:#1B1534;background-image:linear-gradient(135deg,#241B47 0%,#1B1534 100%);border-radius:8px;">
+                            {% if next_steps %}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:22px 0;background-color:#09263A;background-image:linear-gradient(135deg,#0D3348 0%,#09263A 100%);border-radius:8px;">
                                 <tr><td style="padding:18px 20px;">
                                     <h3 style="margin:0 0 12px;font-size:16px;line-height:1.3;font-weight:700;color:#FFFFFF;">📌 Recommended Next Steps</h3>
                                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
                                         {% for step in next_steps %}
                                         <tr>
-                                            <td valign="top" style="width:24px;padding:0 8px 12px 0;font-size:14px;font-weight:700;color:#CF9BFF;">{{ loop.index }}.</td>
-                                            <td valign="top" style="padding:0 0 12px;font-size:14px;line-height:1.55;color:#EDE7F7;"><strong style="color:#FFFFFF;">{{ step.action }}</strong>{% if step.owner or step.timeline %}<br><span style="font-size:12.5px;color:#B9AEDA;">{% if step.owner %}Owner: {{ step.owner }}{% endif %}{% if step.owner and step.timeline %} · {% endif %}{% if step.timeline %}Timeline: {{ step.timeline }}{% endif %}</span>{% endif %}</td>
+                                            <td valign="top" style="width:24px;padding:0 8px 12px 0;font-size:14px;font-weight:700;color:#B9F2F7;">{{ loop.index }}.</td>
+                                            <td valign="top" style="padding:0 0 12px;font-size:14px;line-height:1.55;color:#E9FAFC;"><strong style="color:#FFFFFF;">{{ step.action }}</strong>{% if step.owner or step.timeline %}<br><span style="font-size:12.5px;color:#B9D8DE;">{% if step.owner %}Owner: {{ step.owner }}{% endif %}{% if step.owner and step.timeline %} · {% endif %}{% if step.timeline %}Timeline: {{ step.timeline }}{% endif %}</span>{% endif %}</td>
                                         </tr>
                                         {% endfor %}
                                     </table>
                                 </td></tr>
                             </table>{% endif %}
 
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0 0 20px;background-color:#E9F7EF;border:1px dashed #7FCBA3;border-radius:6px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0 0 20px;background-color:#F2F8D9;border:1px dashed #B9DF00;border-radius:6px;">
                                 <tr><td align="center" style="padding:16px 18px;text-align:center;">
-                                    <p style="margin:0 0 6px;font-size:14.5px;font-weight:700;color:#08643D;">🐣 We welcome resubmissions</p>
-                                    <p style="margin:0;font-size:13.5px;line-height:1.6;color:#1B3A2A;">{{ closing_note }}</p>
+                                    <p style="margin:0 0 6px;font-size:14.5px;font-weight:700;color:#4E6500;">🐣 We welcome resubmissions</p>
+                                    <p style="margin:0;font-size:13.5px;line-height:1.6;color:#274900;">{{ closing_note }}</p>
                                 </td></tr>
                             </table>
 
@@ -181,9 +176,9 @@
                     </tr>
 
                     <tr>
-                        <td bgcolor="#1B1534" style="padding:20px 30px;background-color:#1B1534;border-top:4px solid #8A00E5;text-align:center;font-family:'Segoe UI',Roboto,Arial,sans-serif;">
+                        <td bgcolor="#09263A" style="padding:20px 30px;background-color:#09263A;border-top:4px solid #00A9CE;text-align:center;font-family:'Segoe UI',Roboto,Arial,sans-serif;">
                             <p style="margin:0 0 5px;font-size:12px;line-height:1.5;font-weight:700;color:#FFFFFF;">Oliver · Siemens Energy TI</p>
-                            <p style="margin:0;font-size:11px;line-height:1.5;color:#ADA9C2;">AI Initiative Stage-Gate Assessment · Reply to continue the conversation.</p>
+                            <p style="margin:0;font-size:11px;line-height:1.5;color:#B9D8DE;">AI Initiative Stage-Gate Assessment · Reply to continue the conversation.</p>
                         </td>
                     </tr>
                 </table>

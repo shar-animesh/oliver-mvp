@@ -104,7 +104,13 @@ def render_assessment_email(
     stage = assessment.current_stage
     target_stage = assessment.transition_target
     next_stage = target_stage
-    score_display = str(assessment.composite_score) if assessment.composite_score is not None else "—"
+    scored_dimension_count = sum(dimension.value is not None for dimension in assessment.dimensions)
+    score_display = str(assessment.composite_score) if assessment.composite_score is not None else "Incomplete"
+    score_status = (
+        f"{scored_dimension_count}/{len(assessment.dimensions)} dimensions scored"
+        if assessment.composite_score is None
+        else "Complete stage-weighted score"
+    )
     weight_note = ", ".join(f"{dimension.agent} {dimension.weight}%" for dimension in assessment.dimensions)
     recommendation = participant_transition_recommendation(assessment)
 
@@ -116,6 +122,7 @@ def render_assessment_email(
         stage_name=stage.display_name,
         path_heading=(f"Path to {next_stage.value} — {next_stage.display_name}" if next_stage else "Scale sustainment and value realization"),
         score_display=score_display,
+        score_status=score_status,
         rating=assessment.rating,
         gate_outcome=assessment.gate_outcome.value.replace("_", " ").title(),
         recommendation=recommendation,

@@ -11,7 +11,10 @@ export type {
     RelatedIdea,
 } from "./email-thread";
 export type {
+    InitiativeAssessmentSummary,
+    InitiativeDetail,
     InitiativeSummary,
+    InitiativeThread,
     IntelligenceOverview,
     PortfolioInsightAdmin,
     PortfolioInsightReport,

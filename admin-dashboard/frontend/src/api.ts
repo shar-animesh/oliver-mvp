@@ -7,6 +7,7 @@ import type {
     EmailThreadDetail,
     EmailThreadSummary,
     InitiativeSummary,
+    InitiativeDetail,
     IntelligenceOverview,
 } from "./lib/models";
 
@@ -51,6 +52,7 @@ export const api = {
         }),
     logout: (): Promise<void> => request<void>("/auth/logout", { method: "POST" }),
     listInitiatives: (): Promise<InitiativeSummary[]> => request<InitiativeSummary[]>("/initiatives"),
+    getInitiative: (id: string): Promise<InitiativeDetail> => request<InitiativeDetail>(`/initiatives/${id}`),
     getIntelligence: (): Promise<IntelligenceOverview> => request<IntelligenceOverview>("/intelligence"),
     listEmailThreads: (): Promise<EmailThreadSummary[]> => request<EmailThreadSummary[]>("/email-threads"),
     getEmailThread: (id: string): Promise<EmailThreadDetail> => request<EmailThreadDetail>(`/email-threads/${id}`),

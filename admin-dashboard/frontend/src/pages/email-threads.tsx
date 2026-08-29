@@ -9,14 +9,21 @@ import { formatDate, formatGate, initials } from "../lib/format";
 import type { EmailThreadDetail, EmailThreadSummary } from "../lib/models";
 import ThreadDetail from "./thread-detail";
 
-export default function EmailThreads() {
+interface EmailThreadsProps {
+    initialThreadId: string | null;
+    onOpenInitiative: (initiativeId: string) => void;
+}
+
+type StatusFilter = "all" | "assessed" | "complete" | "needs-evidence" | "unassessed";
+
+export default function EmailThreads({ initialThreadId, onOpenInitiative }: EmailThreadsProps) {
     const [threads, setThreads] = useState<EmailThreadSummary[]>([]);
     const [selectedThread, setSelectedThread] = useState<EmailThreadDetail | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [detailLoading, setDetailLoading] = useState(false);
     const [query, setQuery] = useState("");
-    const [statusFilter, setStatusFilter] = useState<"all" | "unscored" | "scored">("all");
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
     const detailRequestId = useRef(0);
 
     useEffect(() => {
@@ -27,10 +34,20 @@ export default function EmailThreads() {
             .finally(() => setLoading(false));
     }, []);
 
+    const assessedCount = threads.filter((thread) => thread.assessment_count > 0).length;
+    const completeScoreCount = threads.filter((thread) => thread.canonical_score !== null).length;
+    const needsEvidenceCount = threads.filter((thread) => thread.assessment_count > 0 && thread.canonical_score === null).length;
+    const unassessedCount = threads.filter((thread) => thread.assessment_count === 0).length;
+
     const filteredThreads = useMemo(() => {
         const normalizedQuery = query.trim().toLowerCase();
         return threads.filter((thread) => {
-            const matchesStatus = statusFilter === "all" || (statusFilter === "scored" ? thread.canonical_score !== null : thread.canonical_score === null);
+            const matchesStatus =
+                statusFilter === "all" ||
+                (statusFilter === "assessed" && thread.assessment_count > 0) ||
+                (statusFilter === "complete" && thread.canonical_score !== null) ||
+                (statusFilter === "needs-evidence" && thread.assessment_count > 0 && thread.canonical_score === null) ||
+                (statusFilter === "unassessed" && thread.assessment_count === 0);
             const matchesQuery =
                 !normalizedQuery ||
                 [thread.subject, thread.participant_email, thread.conversation_id].some((value) => value?.toLowerCase().includes(normalizedQuery));
@@ -39,7 +56,6 @@ export default function EmailThreads() {
     }, [query, statusFilter, threads]);
 
     const messageCount = threads.reduce((total, thread) => total + thread.message_count, 0);
-    const scoredCount = threads.filter((thread) => thread.canonical_score !== null).length;
     const gatePasses = threads.filter((thread) => ["ADVANCE", "CONDITIONAL_ADVANCE"].includes(thread.gate_outcome || "")).length;
     const scoredThreads = threads.filter((thread) => thread.canonical_score !== null);
     const averageScore =
@@ -63,12 +79,28 @@ export default function EmailThreads() {
         }
     }
 
+    useEffect(() => {
+        if (initialThreadId) window.setTimeout(() => void openThread(initialThreadId), 0);
+    }, [initialThreadId]);
+
+    function closeThread(): void {
+        setSelectedThread(null);
+        const url = new URL(window.location.href);
+        url.searchParams.delete("thread");
+        window.history.replaceState(null, "", url);
+    }
+
     if (selectedThread) {
         return (
             <>
                 {detailLoading ? <p className="empty-state">Loading related conversation...</p> : null}
                 {error ? <p className="error-message">{error}</p> : null}
-                <ThreadDetail thread={selectedThread} onBack={() => setSelectedThread(null)} onOpenRelated={(id) => void openThread(id)} />
+                <ThreadDetail
+                    thread={selectedThread}
+                    onBack={closeThread}
+                    onOpenRelated={(id) => void openThread(id)}
+                    onOpenInitiative={onOpenInitiative}
+                />
             </>
         );
     }
@@ -89,11 +121,12 @@ export default function EmailThreads() {
 
             <section className="metric-grid" aria-label="Assessment summary">
                 <MetricCard label="Conversations" value={threads.length} note={`${messageCount} messages recorded`} loading={loading} tone="accent" />
-                <MetricCard label="Scored conversations" value={scoredCount} note="With an overall score" loading={loading} />
+                <MetricCard label="Assessed conversations" value={assessedCount} note={`${completeScoreCount} complete score${completeScoreCount === 1 ? "" : "s"}`} loading={loading} />
+                <MetricCard label="Needs evidence" value={needsEvidenceCount} note="Assessment is incomplete" loading={loading} />
                 <MetricCard
                     label="Average overall score"
                     value={averageScore ?? "—"}
-                    note={averageScore === null ? "No scored conversations" : "Across scored conversations"}
+                    note={averageScore === null ? "No complete scores" : `Across ${completeScoreCount} complete score${completeScoreCount === 1 ? "" : "s"}`}
                     loading={loading}
                 />
                 <MetricCard label="Recommended advances" value={gatePasses} note="Ready for the next stage" loading={loading} tone="operational" />
@@ -124,18 +157,32 @@ export default function EmailThreads() {
                         All <span>{threads.length}</span>
                     </button>
                     <button
-                        className={statusFilter === "scored" ? "active" : ""}
-                        onClick={() => setStatusFilter("scored")}
+                        className={statusFilter === "assessed" ? "active" : ""}
+                        onClick={() => setStatusFilter("assessed")}
                         role="tab"
-                        aria-selected={statusFilter === "scored"}>
-                        Scored <span>{scoredCount}</span>
+                        aria-selected={statusFilter === "assessed"}>
+                        Assessed <span>{assessedCount}</span>
                     </button>
                     <button
-                        className={statusFilter === "unscored" ? "active" : ""}
-                        onClick={() => setStatusFilter("unscored")}
+                        className={statusFilter === "complete" ? "active" : ""}
+                        onClick={() => setStatusFilter("complete")}
                         role="tab"
-                        aria-selected={statusFilter === "unscored"}>
-                        Unscored <span>{threads.length - scoredCount}</span>
+                        aria-selected={statusFilter === "complete"}>
+                        Complete score <span>{completeScoreCount}</span>
+                    </button>
+                    <button
+                        className={statusFilter === "needs-evidence" ? "active" : ""}
+                        onClick={() => setStatusFilter("needs-evidence")}
+                        role="tab"
+                        aria-selected={statusFilter === "needs-evidence"}>
+                        Needs evidence <span>{needsEvidenceCount}</span>
+                    </button>
+                    <button
+                        className={statusFilter === "unassessed" ? "active" : ""}
+                        onClick={() => setStatusFilter("unassessed")}
+                        role="tab"
+                        aria-selected={statusFilter === "unassessed"}>
+                        Not assessed <span>{unassessedCount}</span>
                     </button>
                 </div>
 
@@ -164,7 +211,7 @@ export default function EmailThreads() {
                             <span role="columnheader">Conversation</span>
                             <span role="columnheader">Participant</span>
                             <span role="columnheader">Score</span>
-                            <span role="columnheader">DI stage</span>
+                            <span role="columnheader">Pilot stage</span>
                             <span role="columnheader">Gate outcome</span>
                             <span role="columnheader">Last activity</span>
                             <span aria-hidden="true" />
@@ -175,7 +222,7 @@ export default function EmailThreads() {
                                     <span className="initiative-mark" />
                                     <span>
                                         <strong>{thread.subject || "Untitled conversation"}</strong>
-                                        <small>{thread.conversation_id}</small>
+                                        <small>{thread.initiative_title || "No linked pilot"}</small>
                                     </span>
                                 </span>
                                 <span className="owner-cell" role="cell">
@@ -183,7 +230,10 @@ export default function EmailThreads() {
                                     <span>{thread.participant_email || "Unknown participant"}</span>
                                 </span>
                                 <span role="cell">
-                                    <strong className="table-score">{thread.canonical_score ?? "—"}</strong>
+                                    <strong className="table-score">{thread.canonical_score ?? (thread.assessment_count > 0 ? "Incomplete" : "—")}</strong>
+                                    <small className="score-status">
+                                        {thread.canonical_score !== null ? thread.rating || "Complete" : thread.assessment_count > 0 ? "Evidence required" : "Not assessed"}
+                                    </small>
                                 </span>
                                 <span className="numeric-cell" role="cell">
                                     {thread.di_stage || "—"}

@@ -20,7 +20,7 @@ from app.utils.models.api import (
     OliverRunResponse,
     RelatedIdeaResponse,
 )
-from app.utils.postgres import CanonicalAssessmentDb, EmailMessageDb, EmailThreadDb, OliverRunDb, OliverRunRelatedThreadDb, get_db
+from app.utils.postgres import CanonicalAssessmentDb, EmailMessageDb, EmailThreadDb, InitiativeDb, OliverRunDb, OliverRunRelatedThreadDb, get_db
 
 router = APIRouter(
     prefix="/api/v1/email-threads",
@@ -70,6 +70,10 @@ def list_email_threads(database: Session = Depends(get_db)) -> List[EmailThreadS
     rows = database.execute(
         select(
             EmailThreadDb,
+            InitiativeDb.id,
+            InitiativeDb.title,
+            InitiativeDb.current_stage,
+            InitiativeDb.lifecycle_state,
             message_counts.c.message_count,
             func.coalesce(run_counts.c.run_count, 0),
             func.coalesce(assessment_counts.c.assessment_count, 0),
@@ -80,6 +84,7 @@ def list_email_threads(database: Session = Depends(get_db)) -> List[EmailThreadS
             message_counts.c.last_activity_at,
         )
         .join(message_counts, message_counts.c.thread_id == EmailThreadDb.id)
+        .outerjoin(InitiativeDb, InitiativeDb.id == EmailThreadDb.initiative_id)
         .outerjoin(run_counts, run_counts.c.thread_id == EmailThreadDb.id)
         .outerjoin(assessment_counts, assessment_counts.c.thread_id == EmailThreadDb.id)
         .outerjoin(
@@ -91,6 +96,8 @@ def list_email_threads(database: Session = Depends(get_db)) -> List[EmailThreadS
     return [
         EmailThreadSummaryResponse(
             id=thread.id,
+            initiative_id=thread.initiative_id,
+            initiative_title=initiative_title,
             conversation_id=thread.conversation_id,
             subject=thread.subject,
             participant_email=thread.participant_email,
@@ -98,12 +105,29 @@ def list_email_threads(database: Session = Depends(get_db)) -> List[EmailThreadS
             run_count=run_count,
             assessment_count=assessment_count,
             canonical_score=canonical_score,
-            di_stage=di_stage,
+            di_stage=initiative_stage or assessment_stage,
+            assessment_stage=assessment_stage,
+            initiative_current_stage=initiative_stage,
+            initiative_lifecycle_state=initiative_lifecycle_state,
             gate_outcome=gate_outcome,
             rating=rating,
             last_activity_at=last_activity_at,
         )
-        for thread, message_count, run_count, assessment_count, canonical_score, di_stage, gate_outcome, rating, last_activity_at in rows
+        for (
+            thread,
+            initiative_id,
+            initiative_title,
+            initiative_stage,
+            initiative_lifecycle_state,
+            message_count,
+            run_count,
+            assessment_count,
+            canonical_score,
+            assessment_stage,
+            gate_outcome,
+            rating,
+            last_activity_at,
+        ) in rows
     ]
 
 
@@ -118,6 +142,7 @@ def get_email_thread(
         .where(EmailThreadDb.id == thread_id)
         .options(
             selectinload(EmailThreadDb.messages),
+            selectinload(EmailThreadDb.initiative),
             selectinload(EmailThreadDb.runs).selectinload(OliverRunDb.assessment),
             selectinload(EmailThreadDb.runs).selectinload(OliverRunDb.delivery),
             selectinload(EmailThreadDb.runs).selectinload(OliverRunDb.related_threads).selectinload(OliverRunRelatedThreadDb.related_thread),
@@ -128,6 +153,10 @@ def get_email_thread(
 
     return EmailThreadDetailResponse(
         id=thread.id,
+        initiative_id=thread.initiative_id,
+        initiative_title=thread.initiative.title if thread.initiative is not None else None,
+        initiative_current_stage=thread.initiative.current_stage if thread.initiative is not None else None,
+        initiative_lifecycle_state=thread.initiative.lifecycle_state if thread.initiative is not None else None,
         conversation_id=thread.conversation_id,
         subject=thread.subject,
         participant_email=thread.participant_email,

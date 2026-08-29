@@ -3,6 +3,7 @@
 
 export interface InitiativeSummary {
     id: string;
+    primary_thread_id: string | null;
     title: string;
     owner_email: string | null;
     current_stage: string;
@@ -20,6 +21,73 @@ export interface InitiativeSummary {
     latest_assessment_at: string | null;
     stage_entered_at: string;
     updated_at: string;
+}
+
+export interface InitiativeThread {
+    id: string;
+    subject: string | null;
+    participant_email: string | null;
+    updated_at: string;
+}
+
+export interface InitiativeAssessmentSummary {
+    run_id: string;
+    evidence_version_id: string | null;
+    current_stage: string;
+    composite_score: number | null;
+    transition_target: string | null;
+    recommended_next_stage: string | null;
+    gate_outcome: string;
+    rating: string;
+    requires_human_review: boolean;
+    transition_policy_version: string;
+    created_at: string;
+}
+
+export interface LifecycleTransition {
+    id: string;
+    assessment_run_id: string | null;
+    transition_type: string;
+    from_stage: string;
+    to_stage: string | null;
+    status: string;
+    requires_human_review: boolean;
+    expected_initiative_version: number;
+    policy_version: string;
+    reason: string;
+    proposed_by: string;
+    decided_by: string | null;
+    created_at: string;
+    decided_at: string | null;
+}
+
+export interface EvidenceVersion {
+    id: string;
+    version: number;
+    source_fingerprint: string;
+    trigger_message_id: string | null;
+    created_at: string;
+}
+
+export interface AuditEvent {
+    id: string;
+    event_type: string;
+    actor_type: string;
+    actor_id: string;
+    subject_type: string;
+    subject_id: string;
+    correlation_id: string | null;
+    payload: Record<string, unknown>;
+    occurred_at: string;
+}
+
+export interface InitiativeDetail extends InitiativeSummary {
+    created_at: string;
+    threads: InitiativeThread[];
+    assessments: InitiativeAssessmentSummary[];
+    evidence_versions: EvidenceVersion[];
+    transitions: LifecycleTransition[];
+    audit_events: AuditEvent[];
 }
 
 export interface PortfolioPattern {

@@ -6,7 +6,7 @@ import re
 from html.parser import HTMLParser
 
 _QUOTE_MARKER = re.compile(
-    r"^\s*(-{2,}\s*original message\s*-{2,}|On .+ wrote:\s*$|From:\s.+|_{5,})",
+    r"^\s*(-{2,}\s*(?:original|forwarded) message\s*-{2,}|begin forwarded message:?\s*$|On .+ wrote:\s*$|From:\s.+|_{5,})",
     re.IGNORECASE | re.MULTILINE,
 )
 _SIGNATURE_DELIMITER = re.compile(r"^--\s*$", re.MULTILINE)

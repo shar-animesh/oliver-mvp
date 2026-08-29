@@ -54,6 +54,13 @@ class CanonicalScoringTests(unittest.TestCase):
         )
         self.assertNotIn("99/100", submission.problem_statement)
 
+    def test_forwarded_history_is_not_treated_as_new_evidence(self) -> None:
+        submission = email_to_submission(
+            "Fwd: Contract review",
+            "<p>Please review the owner update.</p><p>---------- Forwarded message ---------</p><p>From: Oliver</p><p>Previous invented score: 99/100</p>",
+        )
+        self.assertEqual(submission.problem_statement, "Please review the owner update.")
+
     def test_evaluator_cannot_override_canonical_weights_or_stage_policy(self) -> None:
         dimensions = [
             DimensionScore(

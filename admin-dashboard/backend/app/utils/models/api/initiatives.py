@@ -82,6 +82,7 @@ class InitiativeSummaryResponse(BaseModel):
     """Portfolio row backed by authoritative initiative state."""
 
     id: UUID
+    primary_thread_id: Optional[UUID]
     title: str
     owner_email: Optional[str]
     current_stage: str

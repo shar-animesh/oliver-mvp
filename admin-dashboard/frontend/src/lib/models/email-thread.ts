@@ -3,6 +3,8 @@
 
 export interface EmailThreadSummary {
     id: string;
+    initiative_id: string | null;
+    initiative_title: string | null;
     conversation_id: string;
     subject: string | null;
     participant_email: string | null;
@@ -11,6 +13,9 @@ export interface EmailThreadSummary {
     assessment_count: number;
     canonical_score: number | null;
     di_stage: string | null;
+    assessment_stage: string | null;
+    initiative_current_stage: string | null;
+    initiative_lifecycle_state: string | null;
     gate_outcome: string | null;
     rating: string | null;
     last_activity_at: string;
@@ -88,6 +93,10 @@ export interface RelatedIdea {
 
 export interface EmailThreadDetail {
     id: string;
+    initiative_id: string | null;
+    initiative_title: string | null;
+    initiative_current_stage: string | null;
+    initiative_lifecycle_state: string | null;
     conversation_id: string;
     subject: string | null;
     participant_email: string | null;
