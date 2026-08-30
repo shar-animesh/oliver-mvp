@@ -32,6 +32,7 @@ export interface InitiativeThread {
 
 export interface InitiativeAssessmentSummary {
     run_id: string;
+    thread_id: string | null;
     evidence_version_id: string | null;
     current_stage: string;
     composite_score: number | null;

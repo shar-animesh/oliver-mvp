@@ -138,6 +138,11 @@ export default function InitiativeDetail({ initiativeId, onBack, onOpenThread }:
                                         <strong>{assessment.composite_score === null ? "Incomplete score" : `${assessment.composite_score}/100`}</strong>
                                         <span>{assessment.current_stage} · {formatGate(assessment.gate_outcome)} · {formatDate(assessment.created_at)}</span>
                                         <p>{assessment.requires_human_review ? "Human review is required for this assessment." : "No human decision is pending for this assessment."}</p>
+                                        {assessment.thread_id ? (
+                                            <button className="inline-link" type="button" onClick={() => onOpenThread(assessment.thread_id as string)}>
+                                                View assessment details -&gt;
+                                            </button>
+                                        ) : null}
                                     </article>
                                 ))}
                             </div>

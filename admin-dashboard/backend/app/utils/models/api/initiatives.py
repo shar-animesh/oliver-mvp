@@ -14,6 +14,7 @@ class InitiativeAssessmentSummary(BaseModel):
     """One historical canonical assessment without duplicating dimension detail."""
 
     run_id: UUID
+    thread_id: Optional[UUID]
     evidence_version_id: Optional[UUID]
     current_stage: str
     composite_score: Optional[int]

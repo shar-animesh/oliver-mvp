@@ -3,6 +3,7 @@
 
 """Authenticated, read-only portfolio and lifecycle endpoints."""
 
+import json
 from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
@@ -10,7 +11,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.engine import Row
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.security import require_admin
 from app.utils.models.api import (
@@ -131,6 +132,31 @@ def _to_summary(row: Row) -> InitiativeSummaryResponse:
     )
 
 
+def _deduplicate_assessments(assessments: List[CanonicalAssessmentDb]) -> List[CanonicalAssessmentDb]:
+    """Hide byte-for-byte duplicate runs while retaining changed reassessments."""
+    unique: List[CanonicalAssessmentDb] = []
+    seen: set[str] = set()
+    for assessment in assessments:
+        key = json.dumps(
+            {
+                "evidence_version_id": str(assessment.evidence_version_id) if assessment.evidence_version_id else None,
+                "current_stage": assessment.current_stage,
+                "composite_score": assessment.composite_score,
+                "gate_outcome": assessment.gate_outcome,
+                "rating": assessment.rating,
+                "dimensions": assessment.dimensions,
+                "criteria": assessment.criteria,
+            },
+            sort_keys=True,
+            default=str,
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(assessment)
+    return unique
+
+
 @router.get("", response_model=List[InitiativeSummaryResponse])
 def list_initiatives(database: Session = Depends(get_db)) -> List[InitiativeSummaryResponse]:  # noqa: B008
     """List authoritative initiatives, including review and evidence status."""
@@ -159,9 +185,22 @@ def get_initiative(
         database.scalars(
             select(CanonicalAssessmentDb)
             .where(CanonicalAssessmentDb.initiative_id == initiative_id)
+            .options(selectinload(CanonicalAssessmentDb.run))
             .order_by(CanonicalAssessmentDb.created_at.desc())
         )
     )
+    assessments = _deduplicate_assessments(assessments)
+    # The assessment/run relationship is authoritative for provenance.  Include
+    # those run threads as a defensive fallback when an older record was written
+    # before the thread's initiative_id was backfilled; otherwise a pilot can
+    # incorrectly appear to have no conversations despite having evidence.
+    linked_thread_ids = {thread.id for thread in threads}
+    assessment_thread_ids = {
+        assessment.run.thread_id for assessment in assessments if assessment.run is not None and assessment.run.thread_id not in linked_thread_ids
+    }
+    if assessment_thread_ids:
+        threads.extend(database.scalars(select(EmailThreadDb).where(EmailThreadDb.id.in_(assessment_thread_ids))).all())
+        threads.sort(key=lambda thread: (thread.updated_at, thread.id), reverse=True)
     evidence_versions = list(
         database.scalars(select(EvidenceVersionDb).where(EvidenceVersionDb.initiative_id == initiative_id).order_by(EvidenceVersionDb.version.desc()))
     )
@@ -182,6 +221,7 @@ def get_initiative(
         assessments=[
             InitiativeAssessmentSummary(
                 run_id=assessment.run_id,
+                thread_id=assessment.run.thread_id if assessment.run is not None else None,
                 evidence_version_id=assessment.evidence_version_id,
                 current_stage=assessment.current_stage,
                 composite_score=assessment.composite_score,

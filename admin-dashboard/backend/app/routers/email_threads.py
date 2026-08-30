@@ -74,16 +74,16 @@ def list_email_threads(database: Session = Depends(get_db)) -> List[EmailThreadS
             InitiativeDb.title,
             InitiativeDb.current_stage,
             InitiativeDb.lifecycle_state,
-            message_counts.c.message_count,
+            func.coalesce(message_counts.c.message_count, 0),
             func.coalesce(run_counts.c.run_count, 0),
             func.coalesce(assessment_counts.c.assessment_count, 0),
             latest_assessments.c.composite_score,
             latest_assessments.c.current_stage,
             latest_assessments.c.gate_outcome,
             latest_assessments.c.rating,
-            message_counts.c.last_activity_at,
+            func.coalesce(message_counts.c.last_activity_at, EmailThreadDb.updated_at),
         )
-        .join(message_counts, message_counts.c.thread_id == EmailThreadDb.id)
+        .outerjoin(message_counts, message_counts.c.thread_id == EmailThreadDb.id)
         .outerjoin(InitiativeDb, InitiativeDb.id == EmailThreadDb.initiative_id)
         .outerjoin(run_counts, run_counts.c.thread_id == EmailThreadDb.id)
         .outerjoin(assessment_counts, assessment_counts.c.thread_id == EmailThreadDb.id)
@@ -151,12 +151,24 @@ def get_email_thread(
     if thread is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Email thread not found")
 
+    # Older runs may have persisted the initiative on the canonical assessment
+    # but not on the thread row.  Recover that linkage from run provenance so
+    # the conversation still opens the correct pilot in the admin UI.
+    initiative = thread.initiative
+    if initiative is None:
+        for run in sorted(thread.runs, key=lambda item: (item.created_at, item.id), reverse=True):
+            assessment = run.assessment
+            if assessment is not None and assessment.initiative_id is not None:
+                initiative = database.get(InitiativeDb, assessment.initiative_id)
+                if initiative is not None:
+                    break
+
     return EmailThreadDetailResponse(
         id=thread.id,
-        initiative_id=thread.initiative_id,
-        initiative_title=thread.initiative.title if thread.initiative is not None else None,
-        initiative_current_stage=thread.initiative.current_stage if thread.initiative is not None else None,
-        initiative_lifecycle_state=thread.initiative.lifecycle_state if thread.initiative is not None else None,
+        initiative_id=initiative.id if initiative is not None else thread.initiative_id,
+        initiative_title=initiative.title if initiative is not None else None,
+        initiative_current_stage=initiative.current_stage if initiative is not None else None,
+        initiative_lifecycle_state=initiative.lifecycle_state if initiative is not None else None,
         conversation_id=thread.conversation_id,
         subject=thread.subject,
         participant_email=thread.participant_email,

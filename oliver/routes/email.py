@@ -43,6 +43,47 @@ settings = get_settings()
 
 MAX_TOOL_ROUNDS = 8
 
+
+def _canonical_message_id(value: str) -> str:
+    """Normalize provider message IDs so transport formatting cannot defeat idempotency."""
+    return value.strip().strip("<>").strip().lower()
+
+
+def _normalized_header(value: str | None) -> str:
+    return " ".join((value or "").split()).casefold()
+
+
+def _is_replayed_message(
+    existing: EmailMessageDb,
+    *,
+    message_id: str,
+    sender_email: str | None,
+    subject: str | None,
+    content_html: str,
+    received_at: datetime,
+) -> bool:
+    """Recognize a provider replay even when it supplied a different item ID.
+
+    Outlook/Logic App retries normally preserve ``internetMessageId``.  Some
+    connectors fall back to a per-item ID, though, which previously created a
+    second Oliver run for the same message.  An exact content/header/timestamp
+    match is a safe secondary key for that case.  A genuinely new email should
+    have its own stable provider ID; suppressing an ID-less replay is preferable
+    to creating a second assessment and outbound reply.
+    """
+    if _canonical_message_id(existing.internet_message_id) == _canonical_message_id(message_id):
+        return True
+    if existing.direction != "INBOUND":
+        return False
+    if _normalized_header(existing.sender_email) != _normalized_header(sender_email):
+        return False
+    if _normalized_header(existing.subject) != _normalized_header(subject):
+        return False
+    if " ".join(html_to_text(existing.content_html or "").split()).casefold() != " ".join(html_to_text(content_html).split()).casefold():
+        return False
+    return True
+
+
 client = get_model_client()
 assessment_agent: AssessmentAgent = build_assessment_agent(
     client=client,
@@ -110,6 +151,7 @@ def respond_to_email(
             )
         thread = inbound_message.thread
     else:
+        inbound_message = None
         thread = db.scalar(select(EmailThreadDb).where(EmailThreadDb.conversation_id == request.conversation_id))
         if thread is None:
             thread = EmailThreadDb(
@@ -120,22 +162,59 @@ def respond_to_email(
             db.add(thread)
             db.flush()
         else:
+            # A few Microsoft connectors expose a per-item ID instead of the
+            # stable Internet Message-ID.  Check the existing messages in this
+            # conversation before inserting so a replay cannot produce another
+            # run (or another outbound email) for the same payload.
+            existing_messages = list(
+                db.scalars(select(EmailMessageDb).where(EmailMessageDb.thread_id == thread.id, EmailMessageDb.direction == "INBOUND"))
+            )
+            inbound_message = next(
+                (
+                    message
+                    for message in existing_messages
+                    if _is_replayed_message(
+                        message,
+                        message_id=request.message_id,
+                        sender_email=request.sender_email,
+                        subject=request.subject,
+                        content_html=request.email_thread,
+                        received_at=request.received_at,
+                    )
+                ),
+                None,
+            )
+            if inbound_message is not None:
+                existing_run = db.scalar(
+                    select(OliverRunDb).where(OliverRunDb.inbound_message_id == inbound_message.id).order_by(OliverRunDb.created_at.desc())
+                )
+                if existing_run is not None:
+                    existing_delivery = herald.for_run(db, existing_run.id)
+                    return EmailResponseResult(
+                        run_id=existing_run.id,
+                        action=existing_run.action,
+                        subject=existing_run.subject,
+                        email_html=existing_run.rendered_email_html,
+                        delivery_id=existing_delivery.id if existing_delivery is not None else None,
+                        delivery_status=existing_delivery.status if existing_delivery is not None else None,
+                    )
             thread.subject = request.subject or thread.subject
             thread.participant_email = request.sender_email or thread.participant_email
 
-        inbound_message = EmailMessageDb(
-            thread_id=thread.id,
-            internet_message_id=request.message_id,
-            direction="INBOUND",
-            sender_email=request.sender_email,
-            recipient_emails=request.recipient_emails,
-            subject=request.subject,
-            content_html=request.email_thread,
-            received_at=request.received_at,
-        )
-        db.add(inbound_message)
-        db.commit()
-        db.refresh(inbound_message)
+        if inbound_message is None:
+            inbound_message = EmailMessageDb(
+                thread_id=thread.id,
+                internet_message_id=request.message_id,
+                direction="INBOUND",
+                sender_email=request.sender_email,
+                recipient_emails=request.recipient_emails,
+                subject=request.subject,
+                content_html=request.email_thread,
+                received_at=request.received_at,
+            )
+            db.add(inbound_message)
+            db.commit()
+            db.refresh(inbound_message)
 
     try:
         attachments = [attachment_service.ingest(db, inbound_message, attachment) for attachment in request.attachments]

@@ -18,6 +18,7 @@ export default function Initiatives({ onOpenInitiative }: InitiativesProps) {
     const [loading, setLoading] = useState(true);
     const [intelligence, setIntelligence] = useState<IntelligenceOverview | null>(null);
     const [stageFilter, setStageFilter] = useState("ALL");
+    const [query, setQuery] = useState("");
 
     useEffect(() => {
         let active = true;
@@ -56,7 +57,18 @@ export default function Initiatives({ onOpenInitiative }: InitiativesProps) {
         () => ["DI1", "DI2", "DI3", "DI4", "DI5"].map((stage) => ({ stage, count: initiatives.filter((initiative) => initiative.current_stage === stage).length })),
         [initiatives],
     );
-    const visibleInitiatives = stageFilter === "ALL" ? initiatives : initiatives.filter((initiative) => initiative.current_stage === stageFilter);
+    const visibleInitiatives = useMemo(() => {
+        const normalizedQuery = query.trim().toLowerCase();
+        return initiatives.filter((initiative) => {
+            const matchesStage = stageFilter === "ALL" || initiative.current_stage === stageFilter;
+            const matchesQuery =
+                !normalizedQuery ||
+                [initiative.title, initiative.owner_email, initiative.id, initiative.primary_thread_id]
+                    .filter(Boolean)
+                    .some((value) => value?.toLowerCase().includes(normalizedQuery));
+            return matchesStage && matchesQuery;
+        });
+    }, [initiatives, query, stageFilter]);
 
     return (
         <section id="portfolio">
@@ -103,7 +115,16 @@ export default function Initiatives({ onOpenInitiative }: InitiativesProps) {
                         <h3 id="portfolio-heading">DI1–DI5 lifecycle</h3>
                         <p>{stageFilter === "ALL" ? initiatives.length : visibleInitiatives.length} of {initiatives.length} total records</p>
                     </div>
-                    <span className="refresh-note" title="Hold state is sourced from Oliver lifecycle authority. This dashboard does not change lifecycle records.">{metrics.held} on hold</span>
+                    <div className="portfolio-heading-actions">
+                        <label className="search-field portfolio-search">
+                            <span className="sr-only">Search pilots</span>
+                            <svg aria-hidden="true" viewBox="0 0 20 20">
+                                <path d="m14.2 13.14 3.33 3.33-1.06 1.06-3.33-3.33a6.5 6.5 0 1 1 1.06-1.06ZM9 14a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" />
+                            </svg>
+                            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search pilots or email ID" />
+                        </label>
+                        <span className="refresh-note" title="Hold state is sourced from Oliver lifecycle authority. This dashboard does not change lifecycle records.">{metrics.held} on hold</span>
+                    </div>
                 </div>
                 {error ? <p className="error-message">{error}</p> : null}
                 {!loading && !error && initiatives.length === 0 ? (

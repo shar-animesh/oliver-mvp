@@ -12,8 +12,14 @@ interface ThreadDetailProps {
 }
 
 export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInitiative }: ThreadDetailProps) {
-    const latestRun = thread.runs.at(-1);
-    const assessment = latestRun?.assessment ?? null;
+    // A conversation can have follow-up runs that intentionally do not create an
+    // assessment (for example, a clarification or a NO_REPLY decision).  The
+    // latest processing run is still useful for delivery telemetry, but it must
+    // not hide the latest assessment from the assessment panel.
+    const runsByCreatedAt = [...thread.runs].sort((left, right) => Date.parse(left.created_at) - Date.parse(right.created_at));
+    const latestRun = runsByCreatedAt.at(-1);
+    const latestAssessmentRun = [...runsByCreatedAt].reverse().find((run) => run.assessment !== null);
+    const assessment = latestAssessmentRun?.assessment ?? null;
     const totalTokens = thread.runs.reduce((total, run) => total + (run.prompt_tokens || 0) + (run.completion_tokens || 0), 0);
     const scoredDimensionCount = assessment?.dimensions.filter((dimension) => dimension.value !== null).length ?? 0;
     const unknownDimensions = assessment?.dimensions.filter((dimension) => dimension.value === null).map((dimension) => dimension.dimension_label) ?? [];

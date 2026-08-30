@@ -517,6 +517,16 @@ main {
     border-bottom: 1px solid var(--border);
 }
 
+.portfolio-heading-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.portfolio-search {
+    min-width: 250px;
+}
+
 .panel-heading h3,
 .assessment-card h3 {
     margin-top: 4px;
@@ -782,6 +792,24 @@ main {
     color: var(--neutral-600);
     font-size: 0.76rem;
     line-height: 1.5;
+}
+
+.inline-link {
+    width: fit-content;
+    margin-top: 4px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--se-teal);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.inline-link:hover {
+    color: var(--se-purple-950);
+    text-decoration: underline;
 }
 
 .linked-row {
@@ -2064,6 +2092,15 @@ main {
 
     .search-field {
         width: 100%;
+    }
+
+    .portfolio-heading-actions {
+        width: 100%;
+    }
+
+    .portfolio-search {
+        min-width: 0;
+        flex: 1;
     }
 
     .data-header {
