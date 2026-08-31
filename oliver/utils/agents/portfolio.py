@@ -21,14 +21,14 @@ from utils.postgres import CanonicalAssessmentDb, InitiativeDb, LifecycleTransit
 class PortfolioPattern(BaseModel):
     """One cross-initiative pattern tied to explicit initiative IDs."""
 
-    title: str = Field(min_length=5, max_length=160)
-    finding: str = Field(min_length=20, max_length=1200)
+    title: str = Field(min_length=5, max_length=120)
+    finding: str = Field(min_length=20, max_length=400)
     supporting_initiative_ids: list[UUID] = Field(min_length=1)
     evidence_count: int = Field(ge=1)
     category: Literal["EVIDENCE", "EXECUTION", "TECHNICAL", "GOVERNANCE", "SAFETY", "DUPLICATE", "PORTFOLIO"] = "PORTFOLIO"
     priority: Literal["HIGH", "MEDIUM", "LOW"] = "MEDIUM"
-    why_it_matters: str = Field(default="", max_length=500)
-    recommended_action: str = Field(default="", max_length=500)
+    why_it_matters: str = Field(default="", max_length=220)
+    recommended_action: str = Field(default="", max_length=220)
 
 
 class PortfolioInsightReport(BaseModel):
@@ -55,15 +55,22 @@ You are Oliver's Portfolio Intelligence Agent. Analyze only the supplied verifie
 Do not infer facts, financial values, delivery status, business units, or relationships that are not present.
 Every pattern, blocker, and duplicate group must cite the exact initiative IDs that support it.
 Set evidence_count to the number of distinct supporting_initiative_ids. Do not treat similar stages alone as duplication.
-Use concise executive language. Return 4-8 high-value signals, not a catalogue. Every signal must include:
+Use plain language for an operations administrator. Return 4-6 high-value signals, not a catalogue.
+UUIDs may appear only in supporting_initiative_ids. Never place UUIDs or UUID fragments in any prose field.
+Never expose raw enum values. Translate HOLD_FOR_EVIDENCE to "more evidence required", CONDITIONAL_ADVANCE
+to "ready to advance with conditions", and ADVANCE to "ready to advance".
+Refer to pilots by their supplied titles. Explain DI stages as Concept, Pilot, Test, Implement, or Scale when needed.
+Every signal must include:
 - category (EVIDENCE, EXECUTION, TECHNICAL, GOVERNANCE, SAFETY, DUPLICATE, or PORTFOLIO)
 - priority (HIGH only when the snapshot shows a material safety, compliance, delivery, or duplicate risk)
-- a concrete finding with exact counts, dimensions, stages, titles, or metrics from the snapshot
+- a concrete finding of at most two short sentences using counts, dimensions, stages, titles, or metrics from the snapshot
 - why_it_matters: one short sentence explaining the operational consequence
 - recommended_action: one specific, verifiable next step for an administrator
 Avoid generic advice such as "review the initiatives". Recommendations must be actions justified by the snapshot, not lifecycle decisions.
+Do not instruct the administrator to apply the most advanced gate outcome, merge or delete records, or place a formal hold.
+Flag conflicting evidence or decisions for governed human resolution instead.
 """.strip()
-_REPORT_CONTRACT_VERSION = "2026-08-31-card-signals-v2"
+_REPORT_CONTRACT_VERSION = "2026-08-31-admin-brief-v3"
 
 
 class PortfolioIntelligenceAgent:
@@ -174,11 +181,19 @@ class PortfolioIntelligenceAgent:
                     "id": str(initiative.id),
                     "title": initiative.title,
                     "stage": initiative.current_stage,
+                    "stage_name": {
+                        "DI1": "Concept",
+                        "DI2": "Pilot",
+                        "DI3": "Test",
+                        "DI4": "Implement",
+                        "DI5": "Scale",
+                    }.get(initiative.current_stage, initiative.current_stage),
                     "lifecycle_state": initiative.lifecycle_state,
                     "is_on_hold": initiative.is_on_hold,
                     "pending_review_count": pending_counts.get(initiative.id, 0),
                     "latest_score": assessment.composite_score if assessment is not None else None,
                     "latest_gate_outcome": assessment.gate_outcome if assessment is not None else None,
+                    "latest_assessment_at": assessment.created_at.isoformat() if assessment is not None else None,
                     "dimensions": [
                         {
                             "dimension": dimension["dimension"],

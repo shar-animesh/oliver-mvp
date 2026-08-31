@@ -1,13 +1,14 @@
 // Path: src/pages/intelligence.tsx
 // Description: Dedicated portfolio intelligence and Scout review surfaces.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api";
 import { formatDate } from "../lib/format";
 import type { InitiativeSummary, IntelligenceOverview, PortfolioPattern } from "../lib/models";
 
 type IntelligenceMode = "patterns" | "scout";
+type PatternFilter = "ALL" | "HIGH" | "EVIDENCE" | "EXECUTION" | "DUPLICATE";
 
 interface IntelligenceProps {
     mode: IntelligenceMode;
@@ -19,12 +20,31 @@ function reportPatterns(overview: IntelligenceOverview): PortfolioPattern[] {
     return report ? [...report.patterns, ...report.recurring_blockers, ...report.possible_duplicates] : [];
 }
 
+function outcomeLabel(outcome: string): string {
+    if (outcome === "HOLD_FOR_EVIDENCE") return "More evidence";
+    if (outcome === "CONDITIONAL_ADVANCE") return "Advance with conditions";
+    if (outcome === "ADVANCE") return "Ready to advance";
+    if (outcome === "HOLD_FOR_REVIEW") return "Human review";
+    return outcome.replaceAll("_", " ").toLowerCase().replace(/(^|\s)\S/g, (letter) => letter.toUpperCase());
+}
+
+function patternCategory(pattern: PortfolioPattern): string {
+    if (pattern.category === "DUPLICATE") return "Overlap";
+    if (pattern.category === "SAFETY") return "Safety";
+    if (pattern.category === "GOVERNANCE") return "Governance";
+    if (pattern.category === "EXECUTION") return "Execution";
+    if (pattern.category === "TECHNICAL") return "Technical";
+    if (pattern.category === "EVIDENCE") return "Evidence";
+    return "Portfolio";
+}
+
 export default function Intelligence({ mode, onOpenInitiative }: IntelligenceProps) {
     const [overview, setOverview] = useState<IntelligenceOverview | null>(null);
     const [initiatives, setInitiatives] = useState<InitiativeSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [patternFilter, setPatternFilter] = useState<PatternFilter>("ALL");
 
     useEffect(() => {
         let active = true;
@@ -62,11 +82,29 @@ export default function Intelligence({ mode, onOpenInitiative }: IntelligencePro
     }
 
     const isPatterns = mode === "patterns";
-    const patterns = overview ? reportPatterns(overview) : [];
+    const patterns = useMemo(() => (overview ? reportPatterns(overview) : []), [overview]);
     const candidates = overview?.scout_candidates ?? [];
     const initiativeNames = new Map(initiatives.map((initiative) => [initiative.id, initiative.title]));
     const highPriorityCount = patterns.filter((pattern) => pattern.priority === "HIGH").length;
     const duplicateCount = patterns.filter((pattern) => pattern.category === "DUPLICATE").length;
+    const assessed = initiatives.filter((initiative) => initiative.latest_assessment_at);
+    const stalledCount = initiatives.filter((initiative) => initiative.lifecycle_state.toLowerCase() === "stalled").length;
+    const evidenceCount = initiatives.filter((initiative) => initiative.latest_gate_outcome === "HOLD_FOR_EVIDENCE").length;
+    const incompleteCount = initiatives.filter((initiative) => initiative.latest_assessment_at && initiative.latest_score === null).length;
+    const outcomeCounts = initiatives.reduce<Record<string, number>>((counts, initiative) => {
+        if (initiative.latest_gate_outcome) counts[initiative.latest_gate_outcome] = (counts[initiative.latest_gate_outcome] ?? 0) + 1;
+        return counts;
+    }, {});
+    const filteredPatterns = useMemo(
+        () => patterns
+            .filter((pattern) => patternFilter === "ALL" || (patternFilter === "HIGH" ? pattern.priority === "HIGH" : pattern.category === patternFilter))
+            .sort((a, b) => Number(b.priority === "HIGH") - Number(a.priority === "HIGH")),
+        [patterns, patternFilter],
+    );
+    const recentAssessments = useMemo(
+        () => [...initiatives].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).slice(0, 8),
+        [initiatives],
+    );
 
     return (
         <section className="intelligence-desk" aria-labelledby="intelligence-title">
@@ -105,35 +143,58 @@ export default function Intelligence({ mode, onOpenInitiative }: IntelligencePro
                         </div>
                         {overview?.latest_portfolio_insight ? (
                             <div className="intelligence-body">
-                                <div className="intelligence-kpis" aria-label="Portfolio insight summary">
-                                    <div><strong>{initiatives.length}</strong><span>Pilots analysed</span></div>
-                                    <div><strong>{patterns.length}</strong><span>Key signals</span></div>
-                                    <div><strong>{highPriorityCount}</strong><span>High priority</span></div>
-                                    <div><strong>{duplicateCount}</strong><span>Overlap signals</span></div>
-                                </div>
-                                <div className="intelligence-summary-block">
-                                    <p className="eyebrow">Executive readout</p>
-                                    <p className="intelligence-summary">{overview.latest_portfolio_insight.report.executive_summary}</p>
-                                </div>
-                                {overview.latest_portfolio_insight.report.recommendations.length ? (
-                                    <div className="intelligence-next-actions">
-                                        <p className="eyebrow">Recommended next actions</p>
-                                        <div>{overview.latest_portfolio_insight.report.recommendations.slice(0, 4).map((recommendation) => <span key={recommendation}>{recommendation}</span>)}</div>
+                                <div className="portfolio-pulse">
+                                    <div className="pulse-heading"><div><p className="eyebrow">Current portfolio picture</p><h4>What is happening now</h4></div><span>{assessed.length} of {initiatives.length} pilots have an assessment</span></div>
+                                    <div className="intelligence-kpis" aria-label="Current portfolio picture">
+                                        <div><strong>{initiatives.length}</strong><span>Pilots in portfolio</span></div>
+                                        <div><strong>{stalledCount}</strong><span>Currently stalled</span></div>
+                                        <div><strong>{evidenceCount}</strong><span>Need more evidence</span></div>
+                                        <div><strong>{highPriorityCount}</strong><span>High-priority findings</span></div>
                                     </div>
-                                ) : null}
+                                    <div className="assessment-outcomes">
+                                        <p className="eyebrow">Latest assessment outcomes</p>
+                                        <div>{Object.entries(outcomeCounts).map(([outcome, count]) => <span key={outcome}><strong>{count}</strong>{outcomeLabel(outcome)}</span>)}</div>
+                                        {incompleteCount ? <small>{incompleteCount} assessed pilot{incompleteCount === 1 ? "" : "s"} still have an incomplete overall score.</small> : null}
+                                    </div>
+                                </div>
+                                <section className="assessment-activity" aria-labelledby="assessment-activity-title">
+                                    <div className="section-heading">
+                                        <div><p className="eyebrow">Assessment activity</p><h4 id="assessment-activity-title">What Oliver is returning to pilots</h4></div>
+                                        <span>Latest {recentAssessments.length} updates</span>
+                                    </div>
+                                    <div className="assessment-activity-table">
+                                        <div className="assessment-activity-header"><span>Pilot</span><span>Stage</span><span>Latest outcome</span><span>Score</span><span>Updated</span></div>
+                                        {recentAssessments.map((initiative) => (
+                                            <button type="button" className="assessment-activity-row" key={initiative.id} onClick={() => onOpenInitiative?.(initiative.id)}>
+                                                <span><strong>{initiative.title}</strong><small>{initiative.latest_activity_type || "Portfolio update"}</small></span>
+                                                <span>{initiative.stage_name} <small>{initiative.current_stage}</small></span>
+                                                <span>{initiative.latest_gate_outcome ? outcomeLabel(initiative.latest_gate_outcome) : "No assessment yet"}</span>
+                                                <span className={initiative.latest_score === null ? "score-incomplete" : ""}>{initiative.latest_score ?? (initiative.latest_assessment_at ? "Incomplete" : "—")}</span>
+                                                <time dateTime={initiative.updated_at}>{formatDate(initiative.updated_at)}</time>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {initiatives.length > recentAssessments.length ? <p className="activity-footnote">Showing the latest {recentAssessments.length} updates. Use Portfolio for the complete pilot register.</p> : null}
+                                </section>
+                                <div className="pattern-toolbar">
+                                    <div><p className="eyebrow">Portfolio patterns</p><h4>Priority findings <span className="toolbar-count">{duplicateCount} overlap</span></h4></div>
+                                    <div className="pattern-filters" role="group" aria-label="Filter findings">
+                                        {(["ALL", "HIGH", "EVIDENCE", "EXECUTION", "DUPLICATE"] as PatternFilter[]).map((filter) => <button type="button" className={patternFilter === filter ? "selected" : ""} key={filter} onClick={() => setPatternFilter(filter)}>{filter === "ALL" ? "All" : filter === "HIGH" ? "High priority" : filter === "DUPLICATE" ? "Overlap" : filter[0] + filter.slice(1).toLowerCase()}</button>)}
+                                    </div>
+                                </div>
                                 <div className="pattern-list">
-                                    {patterns.map((pattern) => (
+                                    {filteredPatterns.map((pattern) => (
                                         <article className="pattern-card" key={`${pattern.title}-${pattern.evidence_count}`}>
                                             <div className="pattern-card-heading">
-                                                <div className="pattern-card-title"><span className={"signal-priority signal-" + (pattern.priority ?? "MEDIUM").toLowerCase()}>{pattern.priority ?? "SIGNAL"}</span><strong>{pattern.title}</strong></div>
+                                                <div className="pattern-card-title"><span className={"signal-priority signal-" + (pattern.priority ?? "MEDIUM").toLowerCase()}>{pattern.priority ?? "SIGNAL"}</span><span className="signal-category">{patternCategory(pattern)}</span><strong>{pattern.title}</strong></div>
                                                 <span>{pattern.evidence_count} linked pilot{pattern.evidence_count === 1 ? "" : "s"}</span>
                                             </div>
                                             <div className="pattern-card-grid">
-                                                <div><small>Why it matters</small><p>{pattern.why_it_matters || "This report predates structured rationale. Refresh insights to generate the operational consequence."}</p></div>
-                                                <div><small>Next move</small><p>{pattern.recommended_action || "Refresh insights to generate a specific administrator action."}</p></div>
+                                                <div><small>Impact</small><p>{pattern.why_it_matters || "Refresh insights to generate the operational consequence."}</p></div>
+                                                <div><small>Suggested admin action</small><p>{pattern.recommended_action || "Refresh insights to generate a specific administrator action."}</p></div>
                                             </div>
                                             <details>
-                                                <summary>Show evidence and linked pilots</summary>
+                                                <summary>View evidence and affected pilots</summary>
                                                 <p>{pattern.finding}</p>
                                                 <div className="linked-pilots">{pattern.supporting_initiative_ids.map((id) => initiativeNames.has(id) ? (
                                                     <button type="button" key={id} onClick={() => onOpenInitiative?.(id)}>{initiativeNames.get(id)}</button>
@@ -142,7 +203,7 @@ export default function Intelligence({ mode, onOpenInitiative }: IntelligencePro
                                         </article>
                                     ))}
                                 </div>
-                                {!patterns.length ? <p className="empty-state">The latest report contains no patterns yet.</p> : null}
+                                {!filteredPatterns.length ? <p className="empty-state">No findings match this filter.</p> : null}
                             </div>
                         ) : (
                             <div className="empty-state intelligence-empty">
@@ -151,16 +212,6 @@ export default function Intelligence({ mode, onOpenInitiative }: IntelligencePro
                             </div>
                         )}
                     </section>
-                    <aside className="panel intelligence-method">
-                        <p className="eyebrow">How this works</p>
-                        <h3>Evidence-linked signals</h3>
-                        <p>Oliver groups repeated themes across canonical pilots and links every finding back to the initiatives that support it.</p>
-                        <dl>
-                            <div><dt>Source</dt><dd>Canonical portfolio</dd></div>
-                            <div><dt>Output</dt><dd>Patterns and blockers</dd></div>
-                            <div><dt>Decision</dt><dd>Admin review required</dd></div>
-                        </dl>
-                    </aside>
                 </div>
             ) : (
                 <section className="panel scout-desk">
