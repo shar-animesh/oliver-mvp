@@ -5,12 +5,13 @@ import { useEffect, useState } from "react";
 
 import { api } from "../api";
 import { formatDate } from "../lib/format";
-import type { IntelligenceOverview, PortfolioPattern } from "../lib/models";
+import type { InitiativeSummary, IntelligenceOverview, PortfolioPattern } from "../lib/models";
 
 type IntelligenceMode = "patterns" | "scout";
 
 interface IntelligenceProps {
     mode: IntelligenceMode;
+    onOpenInitiative?: (id: string) => void;
 }
 
 function reportPatterns(overview: IntelligenceOverview): PortfolioPattern[] {
@@ -18,18 +19,21 @@ function reportPatterns(overview: IntelligenceOverview): PortfolioPattern[] {
     return report ? [...report.patterns, ...report.recurring_blockers, ...report.possible_duplicates] : [];
 }
 
-export default function Intelligence({ mode }: IntelligenceProps) {
+export default function Intelligence({ mode, onOpenInitiative }: IntelligenceProps) {
     const [overview, setOverview] = useState<IntelligenceOverview | null>(null);
+    const [initiatives, setInitiatives] = useState<InitiativeSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         let active = true;
-        void api
-            .getIntelligence()
-            .then((value) => {
-                if (active) setOverview(value);
+        void Promise.all([api.getIntelligence(), api.listInitiatives()])
+            .then(([value, portfolio]) => {
+                if (active) {
+                    setOverview(value);
+                    setInitiatives(portfolio);
+                }
             })
             .catch((reason: unknown) => {
                 if (active) setError(reason instanceof Error ? reason.message : "Could not load intelligence");
@@ -47,7 +51,9 @@ export default function Intelligence({ mode }: IntelligenceProps) {
         setError(null);
         try {
             await api.generatePortfolioInsights();
-            setOverview(await api.getIntelligence());
+            const [nextOverview, portfolio] = await Promise.all([api.getIntelligence(), api.listInitiatives()]);
+            setOverview(nextOverview);
+            setInitiatives(portfolio);
         } catch (reason: unknown) {
             setError(reason instanceof Error ? reason.message : "Could not generate portfolio insights");
         } finally {
@@ -58,6 +64,9 @@ export default function Intelligence({ mode }: IntelligenceProps) {
     const isPatterns = mode === "patterns";
     const patterns = overview ? reportPatterns(overview) : [];
     const candidates = overview?.scout_candidates ?? [];
+    const initiativeNames = new Map(initiatives.map((initiative) => [initiative.id, initiative.title]));
+    const highPriorityCount = patterns.filter((pattern) => pattern.priority === "HIGH").length;
+    const duplicateCount = patterns.filter((pattern) => pattern.category === "DUPLICATE").length;
 
     return (
         <section className="intelligence-desk" aria-labelledby="intelligence-title">
@@ -96,15 +105,40 @@ export default function Intelligence({ mode }: IntelligenceProps) {
                         </div>
                         {overview?.latest_portfolio_insight ? (
                             <div className="intelligence-body">
-                                <p className="intelligence-summary">{overview.latest_portfolio_insight.report.executive_summary}</p>
+                                <div className="intelligence-kpis" aria-label="Portfolio insight summary">
+                                    <div><strong>{initiatives.length}</strong><span>Pilots analysed</span></div>
+                                    <div><strong>{patterns.length}</strong><span>Key signals</span></div>
+                                    <div><strong>{highPriorityCount}</strong><span>High priority</span></div>
+                                    <div><strong>{duplicateCount}</strong><span>Overlap signals</span></div>
+                                </div>
+                                <div className="intelligence-summary-block">
+                                    <p className="eyebrow">Executive readout</p>
+                                    <p className="intelligence-summary">{overview.latest_portfolio_insight.report.executive_summary}</p>
+                                </div>
+                                {overview.latest_portfolio_insight.report.recommendations.length ? (
+                                    <div className="intelligence-next-actions">
+                                        <p className="eyebrow">Recommended next actions</p>
+                                        <div>{overview.latest_portfolio_insight.report.recommendations.slice(0, 4).map((recommendation) => <span key={recommendation}>{recommendation}</span>)}</div>
+                                    </div>
+                                ) : null}
                                 <div className="pattern-list">
                                     {patterns.map((pattern) => (
                                         <article className="pattern-card" key={`${pattern.title}-${pattern.evidence_count}`}>
-                                            <div>
-                                                <strong>{pattern.title}</strong>
-                                                <span>{pattern.evidence_count} linked initiatives</span>
+                                            <div className="pattern-card-heading">
+                                                <div className="pattern-card-title"><span className={"signal-priority signal-" + (pattern.priority ?? "MEDIUM").toLowerCase()}>{pattern.priority ?? "SIGNAL"}</span><strong>{pattern.title}</strong></div>
+                                                <span>{pattern.evidence_count} linked pilot{pattern.evidence_count === 1 ? "" : "s"}</span>
                                             </div>
-                                            <p>{pattern.finding}</p>
+                                            <div className="pattern-card-grid">
+                                                <div><small>Why it matters</small><p>{pattern.why_it_matters || "This report predates structured rationale. Refresh insights to generate the operational consequence."}</p></div>
+                                                <div><small>Next move</small><p>{pattern.recommended_action || "Refresh insights to generate a specific administrator action."}</p></div>
+                                            </div>
+                                            <details>
+                                                <summary>Show evidence and linked pilots</summary>
+                                                <p>{pattern.finding}</p>
+                                                <div className="linked-pilots">{pattern.supporting_initiative_ids.map((id) => initiativeNames.has(id) ? (
+                                                    <button type="button" key={id} onClick={() => onOpenInitiative?.(id)}>{initiativeNames.get(id)}</button>
+                                                ) : <span key={id}>{id.slice(0, 8)}</span>)}</div>
+                                            </details>
                                         </article>
                                     ))}
                                 </div>

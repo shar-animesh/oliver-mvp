@@ -325,13 +325,13 @@ function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOu
                 </header>
                 <main id="main-content" tabIndex={-1}>
                     {workspace === "portfolio" ? (
-                        initiativeId ? <InitiativeDetail key={initiativeId} initiativeId={initiativeId} onBack={() => openWorkspace("portfolio")} onOpenThread={openThread} /> : <Initiatives onOpenInitiative={openInitiative} />
+                        initiativeId ? <InitiativeDetail key={initiativeId} initiativeId={initiativeId} onBack={() => openWorkspace("portfolio")} onOpenThread={openThread} /> : <Initiatives onOpenInitiative={openInitiative} onOpenThread={openThread} />
                     ) : workspace === "conversations" ? (
                         <EmailThreads key={threadId || "conversation-inbox"} initialThreadId={threadId} onOpenInitiative={openInitiative} />
                     ) : workspace === "assessment" ? (
                         <AssessmentLab />
                     ) : (
-                        <Intelligence mode={workspace} />
+                        <Intelligence mode={workspace} onOpenInitiative={openInitiative} />
                     )}
                 </main>
             </div>

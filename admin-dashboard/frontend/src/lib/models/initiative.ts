@@ -97,6 +97,10 @@ export interface PortfolioPattern {
     finding: string;
     supporting_initiative_ids: string[];
     evidence_count: number;
+    category?: "EVIDENCE" | "EXECUTION" | "TECHNICAL" | "GOVERNANCE" | "SAFETY" | "DUPLICATE" | "PORTFOLIO";
+    priority?: "HIGH" | "MEDIUM" | "LOW";
+    why_it_matters?: string;
+    recommended_action?: string;
 }
 
 export interface PortfolioInsightReport {

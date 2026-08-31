@@ -6,14 +6,16 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import MetricCard from "../components/metric-card";
 import { formatDate } from "../lib/format";
-import type { InitiativeSummary } from "../lib/models";
+import type { EmailThreadSummary, InitiativeSummary } from "../lib/models";
 
 interface InitiativesProps {
     onOpenInitiative: (initiativeId: string) => void;
+    onOpenThread: (threadId: string) => void;
 }
 
-export default function Initiatives({ onOpenInitiative }: InitiativesProps) {
+export default function Initiatives({ onOpenInitiative, onOpenThread }: InitiativesProps) {
     const [initiatives, setInitiatives] = useState<InitiativeSummary[]>([]);
+    const [unlinkedThreads, setUnlinkedThreads] = useState<EmailThreadSummary[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [stageFilter, setStageFilter] = useState("ALL");
@@ -21,9 +23,10 @@ export default function Initiatives({ onOpenInitiative }: InitiativesProps) {
 
     useEffect(() => {
         let active = true;
-        void api.listInitiatives().then((value) => {
+        void Promise.all([api.listInitiatives(), api.listEmailThreads()]).then(([value, threads]) => {
             if (!active) return;
             setInitiatives(value);
+            setUnlinkedThreads(threads.filter((thread) => thread.initiative_id === null).slice(0, 8));
         }).catch((reason: unknown) => {
             if (active) setError(reason instanceof Error ? reason.message : "Unable to load initiatives");
         }).finally(() => {
@@ -178,6 +181,25 @@ export default function Initiatives({ onOpenInitiative }: InitiativesProps) {
                 ) : null}
             </section>
 
+            {unlinkedThreads.length ? (
+                <section className="panel unlinked-conversations" aria-labelledby="unlinked-heading">
+                    <div className="panel-heading">
+                        <div>
+                            <p className="eyebrow">Conversation coverage</p>
+                            <h3 id="unlinked-heading">Earlier conversations not linked to a pilot</h3>
+                            <p>These records remain in Conversations until an assessment creates a canonical initiative.</p>
+                        </div>
+                    </div>
+                    <div className="unlinked-list">
+                        {unlinkedThreads.map((thread) => (
+                            <button type="button" className="unlinked-row" key={thread.id} onClick={() => onOpenThread(thread.id)}>
+                                <span><strong>{thread.subject || "Untitled conversation"}</strong><small>{thread.participant_email || "Sender not recorded"}</small></span>
+                                <span><small>{thread.message_count} messages · {thread.assessment_count} assessments</small><time>{formatDate(thread.last_activity_at)}</time></span>
+                            </button>
+                        ))}
+                    </div>
+                </section>
+            ) : null}
         </section>
     );
 }

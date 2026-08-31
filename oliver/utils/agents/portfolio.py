@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
+from typing import Literal
 from uuid import UUID
 
 from openai import OpenAI
@@ -24,6 +25,10 @@ class PortfolioPattern(BaseModel):
     finding: str = Field(min_length=20, max_length=1200)
     supporting_initiative_ids: list[UUID] = Field(min_length=1)
     evidence_count: int = Field(ge=1)
+    category: Literal["EVIDENCE", "EXECUTION", "TECHNICAL", "GOVERNANCE", "SAFETY", "DUPLICATE", "PORTFOLIO"] = "PORTFOLIO"
+    priority: Literal["HIGH", "MEDIUM", "LOW"] = "MEDIUM"
+    why_it_matters: str = Field(default="", max_length=500)
+    recommended_action: str = Field(default="", max_length=500)
 
 
 class PortfolioInsightReport(BaseModel):
@@ -50,8 +55,15 @@ You are Oliver's Portfolio Intelligence Agent. Analyze only the supplied verifie
 Do not infer facts, financial values, delivery status, business units, or relationships that are not present.
 Every pattern, blocker, and duplicate group must cite the exact initiative IDs that support it.
 Set evidence_count to the number of distinct supporting_initiative_ids. Do not treat similar stages alone as duplication.
-Use concise executive language. Recommendations must be actions justified by the snapshot, not lifecycle decisions.
+Use concise executive language. Return 4-8 high-value signals, not a catalogue. Every signal must include:
+- category (EVIDENCE, EXECUTION, TECHNICAL, GOVERNANCE, SAFETY, DUPLICATE, or PORTFOLIO)
+- priority (HIGH only when the snapshot shows a material safety, compliance, delivery, or duplicate risk)
+- a concrete finding with exact counts, dimensions, stages, titles, or metrics from the snapshot
+- why_it_matters: one short sentence explaining the operational consequence
+- recommended_action: one specific, verifiable next step for an administrator
+Avoid generic advice such as "review the initiatives". Recommendations must be actions justified by the snapshot, not lifecycle decisions.
 """.strip()
+_REPORT_CONTRACT_VERSION = "2026-08-31-card-signals-v2"
 
 
 class PortfolioIntelligenceAgent:
@@ -67,7 +79,11 @@ class PortfolioIntelligenceAgent:
         snapshot = self._snapshot(database)
         if not snapshot["initiatives"]:
             raise ValueError("Portfolio has no canonical initiatives to analyze")
-        serialized = json.dumps(snapshot, sort_keys=True, separators=(",", ":"))
+        serialized = json.dumps(
+            {"contract_version": _REPORT_CONTRACT_VERSION, "snapshot": snapshot},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
         fingerprint = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
         existing = database.scalar(select(PortfolioInsightReportDb).where(PortfolioInsightReportDb.input_fingerprint == fingerprint))
         if existing is not None:
