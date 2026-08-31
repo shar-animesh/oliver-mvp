@@ -21,6 +21,7 @@ function reportPatterns(overview: IntelligenceOverview): PortfolioPattern[] {
 export default function Intelligence({ mode }: IntelligenceProps) {
     const [overview, setOverview] = useState<IntelligenceOverview | null>(null);
     const [loading, setLoading] = useState(true);
+    const [generating, setGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -40,6 +41,19 @@ export default function Intelligence({ mode }: IntelligenceProps) {
             active = false;
         };
     }, []);
+
+    async function generateInsights(): Promise<void> {
+        setGenerating(true);
+        setError(null);
+        try {
+            await api.generatePortfolioInsights();
+            setOverview(await api.getIntelligence());
+        } catch (reason: unknown) {
+            setError(reason instanceof Error ? reason.message : "Could not generate portfolio insights");
+        } finally {
+            setGenerating(false);
+        }
+    }
 
     const isPatterns = mode === "patterns";
     const patterns = overview ? reportPatterns(overview) : [];
@@ -73,7 +87,12 @@ export default function Intelligence({ mode }: IntelligenceProps) {
                                 <p className="eyebrow">Latest report</p>
                                 <h3>Portfolio signal</h3>
                             </div>
-                            {overview?.latest_portfolio_insight ? <time>{formatDate(overview.latest_portfolio_insight.created_at)}</time> : null}
+                            <div className="intelligence-actions">
+                                {overview?.latest_portfolio_insight ? <time>{formatDate(overview.latest_portfolio_insight.created_at)}</time> : null}
+                                <button className="insight-action" type="button" onClick={() => void generateInsights()} disabled={generating || loading}>
+                                    {generating ? "Generating..." : overview?.latest_portfolio_insight ? "Refresh insights" : "Generate insights"}
+                                </button>
+                            </div>
                         </div>
                         {overview?.latest_portfolio_insight ? (
                             <div className="intelligence-body">

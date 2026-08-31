@@ -54,6 +54,8 @@ export const api = {
     listInitiatives: (): Promise<InitiativeSummary[]> => request<InitiativeSummary[]>("/initiatives"),
     getInitiative: (id: string): Promise<InitiativeDetail> => request<InitiativeDetail>(`/initiatives/${id}`),
     getIntelligence: (): Promise<IntelligenceOverview> => request<IntelligenceOverview>("/intelligence"),
+    generatePortfolioInsights: (): Promise<Record<string, unknown>> =>
+        request<Record<string, unknown>>("/commands/portfolio-insights", { method: "POST" }),
     listEmailThreads: (): Promise<EmailThreadSummary[]> => request<EmailThreadSummary[]>("/email-threads"),
     getEmailThread: (id: string): Promise<EmailThreadDetail> => request<EmailThreadDetail>(`/email-threads/${id}`),
     runAssessmentTest: (input: AssessmentTestInput): Promise<AssessmentTestResult> =>

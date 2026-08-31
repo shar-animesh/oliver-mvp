@@ -2579,6 +2579,10 @@ main { width: 100%; max-width: none; margin: 0; padding: 34px clamp(24px, 4vw, 5
 .intelligence-method dt { color: var(--se-muted); font-size: .7rem; }
 .intelligence-method dd { color: var(--se-ink); font-size: .7rem; font-weight: 700; }
 .intelligence-empty { min-height: 220px; display: flex; flex-direction: column; justify-content: center; }
+.intelligence-actions { display: flex; align-items: center; gap: 12px; }
+.insight-action { min-height: 34px; padding: 0 12px; border: 1px solid var(--se-blue); border-radius: 2px; color: #fff; background: var(--se-blue); font-size: .68rem; font-weight: 700; cursor: pointer; }
+.insight-action:hover:not(:disabled) { background: var(--se-navy); }
+.insight-action:disabled { cursor: wait; opacity: .65; }
 .scout-desk-title { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
 .scout-desk-title > div { min-width: 0; }
 .scout-desk-title small { display: block; margin-top: 4px; }

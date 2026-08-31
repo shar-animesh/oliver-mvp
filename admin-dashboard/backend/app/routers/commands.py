@@ -81,3 +81,48 @@ async def run_assessment_test(
     if not isinstance(result, dict):
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Oliver returned an invalid assessment result")
     return result
+
+
+@router.post("/portfolio-insights")
+async def run_portfolio_insights(
+    request: Request,
+    principal: AdminPrincipal = Depends(require_admin),  # noqa: B008
+) -> Dict[str, object]:
+    """Forward an authorized portfolio-insight generation request to Oliver."""
+    if not principal.roles.intersection({"Oliver.Assessment.Test", "Oliver.Platform.Admin"}):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Portfolio insight authority is required")
+    try:
+        async with httpx.AsyncClient(timeout=settings.OLIVER_REQUEST_TIMEOUT_SECONDS) as client:
+            response = await client.post(
+                f"{settings.OLIVER_API_URL.rstrip('/')}/api/v1/portfolio/insights",
+                headers=_oliver_headers(request, principal),
+            )
+    except httpx.TimeoutException as error:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail=f"Oliver did not complete the portfolio analysis within {settings.OLIVER_REQUEST_TIMEOUT_SECONDS} seconds",
+        ) from error
+    except httpx.ConnectError as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="The admin API could not connect to the configured Oliver workflow endpoint",
+        ) from error
+    except httpx.HTTPError as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"The request to Oliver failed: {type(error).__name__}",
+        ) from error
+    if response.is_error:
+        detail = "Oliver could not complete the portfolio analysis"
+        try:
+            detail = str(response.json().get("detail") or detail)
+        except (ValueError, AttributeError):
+            pass
+        raise HTTPException(status_code=response.status_code, detail=detail)
+    try:
+        result = response.json()
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Oliver returned a non-JSON portfolio result") from error
+    if not isinstance(result, dict):
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Oliver returned an invalid portfolio result")
+    return result
