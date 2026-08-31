@@ -21,6 +21,7 @@ export interface InitiativeSummary {
     latest_assessment_at: string | null;
     stage_entered_at: string;
     updated_at: string;
+    latest_activity_type: string;
 }
 
 export interface InitiativeThread {

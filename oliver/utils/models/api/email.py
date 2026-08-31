@@ -27,6 +27,7 @@ class EmailResponseRequest(BaseModel):
     conversation_id: str = Field(min_length=1, max_length=512)
     subject: Optional[str] = Field(default=None, max_length=998)
     sender_email: Optional[str] = Field(default=None, max_length=320)
+    sender_name: Optional[str] = Field(default=None, max_length=320)
     recipient_emails: Optional[str] = Field(default=None, max_length=10_000)
     received_at: datetime
     email_thread: str = Field(min_length=1, max_length=MAX_EMAIL_THREAD_CHARACTERS)

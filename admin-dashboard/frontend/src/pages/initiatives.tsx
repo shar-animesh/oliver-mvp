@@ -168,7 +168,10 @@ export default function Initiatives({ onOpenInitiative }: InitiativesProps) {
                                     <strong>{initiative.pending_review_count ?? "-"}</strong>
                                     <small>{initiative.is_on_hold ? "On hold" : initiative.lifecycle_state}</small>
                                 </div>
-                                <time dateTime={initiative.updated_at}>{formatDate(initiative.updated_at)}</time>
+                                <div className="portfolio-updated">
+                                    <time dateTime={initiative.updated_at}>{formatDate(initiative.updated_at)}</time>
+                                    <small>{initiative.latest_activity_type}</small>
+                                </div>
                             </button>
                         ))}
                     </div>

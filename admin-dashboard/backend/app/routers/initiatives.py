@@ -85,6 +85,26 @@ def _summary_rows(database: Session, initiative_id: Optional[UUID] = None) -> Li
         .correlate(InitiativeDb)
         .scalar_subquery()
     )
+    latest_message_direction = (
+        select(EmailMessageDb.direction)
+        .join(EmailThreadDb, EmailThreadDb.id == EmailMessageDb.thread_id)
+        .where(EmailThreadDb.initiative_id == InitiativeDb.id)
+        .order_by(EmailMessageDb.received_at.desc(), EmailMessageDb.id.desc())
+        .limit(1)
+        .correlate(InitiativeDb)
+        .scalar_subquery()
+    )
+    latest_audit_event_type = (
+        select(AuditEventDb.event_type)
+        .where(AuditEventDb.initiative_id == InitiativeDb.id)
+        .order_by(AuditEventDb.occurred_at.desc(), AuditEventDb.id.desc())
+        .limit(1)
+        .correlate(InitiativeDb)
+        .scalar_subquery()
+    )
+    latest_audit_activity = (
+        select(func.max(AuditEventDb.occurred_at)).where(AuditEventDb.initiative_id == InitiativeDb.id).correlate(InitiativeDb).scalar_subquery()
+    )
     effective_updated_at = func.greatest(
         InitiativeDb.updated_at,
         func.coalesce(latest_message_activity, InitiativeDb.updated_at),
@@ -106,6 +126,10 @@ def _summary_rows(database: Session, initiative_id: Optional[UUID] = None) -> Li
             latest_assessment.c.rating,
             latest_assessment.c.created_at,
             effective_updated_at,
+            latest_message_activity,
+            latest_message_direction,
+            latest_audit_activity,
+            latest_audit_event_type,
         )
         .outerjoin(evidence_counts, evidence_counts.c.initiative_id == InitiativeDb.id)
         .outerjoin(review_counts, review_counts.c.initiative_id == InitiativeDb.id)
@@ -121,7 +145,43 @@ def _summary_rows(database: Session, initiative_id: Optional[UUID] = None) -> Li
 
 
 def _to_summary(row: Row) -> InitiativeSummaryResponse:
-    initiative, primary_thread_id, evidence_count, review_count, score, gate, rating, assessed_at, effective_updated_at = row
+    (
+        initiative,
+        primary_thread_id,
+        evidence_count,
+        review_count,
+        score,
+        gate,
+        rating,
+        assessed_at,
+        effective_updated_at,
+        latest_message_activity,
+        latest_message_direction,
+        latest_audit_activity,
+        latest_audit_event_type,
+    ) = row
+    activity_candidates: list[tuple[datetime, str]] = [(initiative.created_at, "Pilot registered")]
+    if latest_message_activity is not None and latest_message_direction:
+        activity_candidates.append(
+            (
+                latest_message_activity,
+                "Oliver replied" if latest_message_direction == "OUTBOUND" else "Email received",
+            )
+        )
+    if assessed_at is not None:
+        activity_candidates.append((assessed_at, "Assessment recorded"))
+    if latest_audit_activity is not None and latest_audit_event_type:
+        activity_candidates.append(
+            (
+                latest_audit_activity,
+                {
+                    "ASSESSMENT_RECORDED": "Assessment recorded",
+                    "STAGE_ADVANCED": "Lifecycle advanced",
+                    "LIFECYCLE_REVIEW_REQUESTED": "Review requested",
+                }.get(latest_audit_event_type, latest_audit_event_type.replace("_", " ").title()),
+            )
+        )
+    _, latest_activity_type = max(activity_candidates, key=lambda candidate: candidate[0])
     days_in_stage = max(0, (datetime.now(timezone.utc) - initiative.stage_entered_at).days)
     return InitiativeSummaryResponse(
         id=initiative.id,
@@ -143,6 +203,7 @@ def _to_summary(row: Row) -> InitiativeSummaryResponse:
         latest_assessment_at=assessed_at,
         stage_entered_at=initiative.stage_entered_at,
         updated_at=effective_updated_at,
+        latest_activity_type=latest_activity_type,
     )
 
 

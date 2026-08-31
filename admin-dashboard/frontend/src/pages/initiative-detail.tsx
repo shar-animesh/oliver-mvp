@@ -74,7 +74,7 @@ export default function InitiativeDetail({ initiativeId, onBack, onOpenThread }:
                 </div>
                 <div className="detail-heading-actions">
                     <span className={`stage-badge stage-${initiative.current_stage.toLowerCase()}`}>{initiative.current_stage}</span>
-                    <span className="detail-date">Updated {formatDate(initiative.updated_at)}</span>
+                    <span className="detail-date">{initiative.latest_activity_type} · {formatDate(initiative.updated_at)}</span>
                 </div>
             </div>
 

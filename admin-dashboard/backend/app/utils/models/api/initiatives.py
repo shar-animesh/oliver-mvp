@@ -101,6 +101,7 @@ class InitiativeSummaryResponse(BaseModel):
     latest_assessment_at: Optional[datetime]
     stage_entered_at: datetime
     updated_at: datetime
+    latest_activity_type: str
 
 
 class InitiativeDetailResponse(InitiativeSummaryResponse):

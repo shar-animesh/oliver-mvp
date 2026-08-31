@@ -1,7 +1,9 @@
 # Path: routes/email.py
 # Description: Internal email-response route called by the Logic App.
 
+import re
 from datetime import datetime, timezone
+from html import escape
 from typing import cast
 from uuid import UUID, uuid4
 
@@ -51,6 +53,23 @@ def _canonical_message_id(value: str) -> str:
 
 def _normalized_header(value: str | None) -> str:
     return " ".join((value or "").split()).casefold()
+
+
+def _participant_display_name(sender_email: str | None, sender_name: str | None = None) -> str | None:
+    """Return a safe participant name for conversational context.
+
+    Microsoft Graph can provide a display name, but older Logic App payloads
+    only contain an address.  In that case derive a readable fallback from the
+    local part without ever inventing a name from the email body.
+    """
+    supplied = " ".join((sender_name or "").split()).strip()
+    if supplied:
+        return supplied[:320]
+    local_part = (sender_email or "").split("@", 1)[0]
+    parts = [part for part in re.split(r"[._\-]+", local_part) if part]
+    if not parts or all(part.casefold() in {"info", "support", "admin", "noreply", "no", "reply"} for part in parts):
+        return None
+    return " ".join(part[:1].upper() + part[1:] for part in parts)[:320]
 
 
 def _is_replayed_message(
@@ -259,15 +278,20 @@ def respond_to_email(
             ) from error
         canonical_prompt_context = canonical_assessment_context(canonical_assessment)
 
-        email_thread = "\n\n".join(
-            (
-                f'<email direction="{message.direction}" sender="{message.sender_email or "unknown"}" '
+        def message_context(message: EmailMessageDb) -> str:
+            participant_name = _participant_display_name(
+                message.sender_email,
+                request.sender_name if message.id == inbound_message.id else None,
+            )
+            return (
+                f'<email direction="{message.direction}" sender="{escape(message.sender_email or "unknown", quote=True)}" '
+                f'participant-name="{escape(participant_name or "", quote=True)}" '
                 f'received-at="{message.received_at.isoformat()}">\n'
                 f"{message.content_html or ''}\n"
                 "</email>"
             )
-            for message in messages
-        )
+
+        email_thread = "\n\n".join(message_context(message) for message in messages)
 
         inbound_idea_transcript: list[str] = []
         for message in messages:
