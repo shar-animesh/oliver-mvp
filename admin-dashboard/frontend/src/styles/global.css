@@ -2589,23 +2589,6 @@ main { width: 100%; max-width: none; margin: 0; padding: 34px clamp(24px, 4vw, 5
 .assessment-outcomes span { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 9px; border: 1px solid var(--se-line); color: var(--se-muted); background: #fff; font-size: .68rem; }
 .assessment-outcomes span strong { color: var(--se-ink); font-size: .9rem; }
 .assessment-outcomes > small { display: block; margin-top: 8px; color: var(--se-muted); font-size: .68rem; }
-.assessment-activity { margin-top: 22px; border: 1px solid var(--se-line); background: #fff; }
-.section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; padding: 14px 16px; }
-.section-heading h4 { margin-top: 4px; color: var(--se-ink); font-size: 1rem; }
-.section-heading > span { color: var(--se-muted); font-size: .68rem; }
-.assessment-activity-table { overflow-x: auto; }
-.assessment-activity-header, .assessment-activity-row { display: grid; grid-template-columns: minmax(230px, 2fr) 110px minmax(150px, 1.2fr) 80px 120px; align-items: center; gap: 12px; min-width: 700px; padding: 10px 16px; }
-.assessment-activity-header { border-top: 1px solid var(--se-line); border-bottom: 1px solid var(--se-line); color: var(--se-muted); font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-.assessment-activity-row { width: 100%; border: 0; border-bottom: 1px solid var(--se-line); color: var(--se-ink); background: #fff; text-align: left; cursor: pointer; }
-.assessment-activity-row:last-child { border-bottom: 0; }
-.assessment-activity-row:hover { background: #f1f7f8; box-shadow: inset 3px 0 var(--se-cyan); }
-.assessment-activity-row > span:first-child { display: grid; gap: 3px; min-width: 0; }
-.assessment-activity-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.assessment-activity-row small, .assessment-activity-row time { color: var(--se-muted); font-size: .66rem; }
-.assessment-activity-row > span:not(:first-child) { font-size: .7rem; }
-.assessment-activity-row > span:nth-child(2) small { display: inline; margin-left: 4px; }
-.score-incomplete { color: #9a6a00; font-weight: 700; }
-.activity-footnote { padding: 10px 16px; color: var(--se-muted); font-size: .68rem; }
 .pattern-toolbar { align-items: center; margin-top: 25px; }
 .pattern-filters { display: flex; flex-wrap: wrap; gap: 5px; }
 .pattern-filters button { padding: 6px 9px; border: 1px solid var(--se-line); color: var(--se-muted); background: #fff; font-size: .66rem; cursor: pointer; }

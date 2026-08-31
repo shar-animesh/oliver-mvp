@@ -38,6 +38,18 @@ function patternCategory(pattern: PortfolioPattern): string {
     return "Portfolio";
 }
 
+function cleanPatternText(value: string, initiativeNames: Map<string, string>): string {
+    let cleaned = value;
+    for (const [id, title] of initiativeNames) {
+        cleaned = cleaned.replace(new RegExp(id.slice(0, 8), "gi"), title);
+        cleaned = cleaned.replace(new RegExp(id, "gi"), title);
+    }
+    return cleaned
+        .replaceAll("HOLD_FOR_EVIDENCE", "more evidence required")
+        .replaceAll("CONDITIONAL_ADVANCE", "advance with conditions")
+        .replaceAll("HOLD_FOR_REVIEW", "human review");
+}
+
 export default function Intelligence({ mode, onOpenInitiative }: IntelligenceProps) {
     const [overview, setOverview] = useState<IntelligenceOverview | null>(null);
     const [initiatives, setInitiatives] = useState<InitiativeSummary[]>([]);
@@ -101,10 +113,6 @@ export default function Intelligence({ mode, onOpenInitiative }: IntelligencePro
             .sort((a, b) => Number(b.priority === "HIGH") - Number(a.priority === "HIGH")),
         [patterns, patternFilter],
     );
-    const recentAssessments = useMemo(
-        () => [...initiatives].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).slice(0, 8),
-        [initiatives],
-    );
 
     return (
         <section className="intelligence-desk" aria-labelledby="intelligence-title">
@@ -157,25 +165,6 @@ export default function Intelligence({ mode, onOpenInitiative }: IntelligencePro
                                         {incompleteCount ? <small>{incompleteCount} assessed pilot{incompleteCount === 1 ? "" : "s"} still have an incomplete overall score.</small> : null}
                                     </div>
                                 </div>
-                                <section className="assessment-activity" aria-labelledby="assessment-activity-title">
-                                    <div className="section-heading">
-                                        <div><p className="eyebrow">Assessment activity</p><h4 id="assessment-activity-title">What Oliver is returning to pilots</h4></div>
-                                        <span>Latest {recentAssessments.length} updates</span>
-                                    </div>
-                                    <div className="assessment-activity-table">
-                                        <div className="assessment-activity-header"><span>Pilot</span><span>Stage</span><span>Latest outcome</span><span>Score</span><span>Updated</span></div>
-                                        {recentAssessments.map((initiative) => (
-                                            <button type="button" className="assessment-activity-row" key={initiative.id} onClick={() => onOpenInitiative?.(initiative.id)}>
-                                                <span><strong>{initiative.title}</strong><small>{initiative.latest_activity_type || "Portfolio update"}</small></span>
-                                                <span>{initiative.stage_name} <small>{initiative.current_stage}</small></span>
-                                                <span>{initiative.latest_gate_outcome ? outcomeLabel(initiative.latest_gate_outcome) : "No assessment yet"}</span>
-                                                <span className={initiative.latest_score === null ? "score-incomplete" : ""}>{initiative.latest_score ?? (initiative.latest_assessment_at ? "Incomplete" : "—")}</span>
-                                                <time dateTime={initiative.updated_at}>{formatDate(initiative.updated_at)}</time>
-                                            </button>
-                                        ))}
-                                    </div>
-                                    {initiatives.length > recentAssessments.length ? <p className="activity-footnote">Showing the latest {recentAssessments.length} updates. Use Portfolio for the complete pilot register.</p> : null}
-                                </section>
                                 <div className="pattern-toolbar">
                                     <div><p className="eyebrow">Portfolio patterns</p><h4>Priority findings <span className="toolbar-count">{duplicateCount} overlap</span></h4></div>
                                     <div className="pattern-filters" role="group" aria-label="Filter findings">
@@ -186,19 +175,19 @@ export default function Intelligence({ mode, onOpenInitiative }: IntelligencePro
                                     {filteredPatterns.map((pattern) => (
                                         <article className="pattern-card" key={`${pattern.title}-${pattern.evidence_count}`}>
                                             <div className="pattern-card-heading">
-                                                <div className="pattern-card-title"><span className={"signal-priority signal-" + (pattern.priority ?? "MEDIUM").toLowerCase()}>{pattern.priority ?? "SIGNAL"}</span><span className="signal-category">{patternCategory(pattern)}</span><strong>{pattern.title}</strong></div>
+                                                <div className="pattern-card-title"><span className={"signal-priority signal-" + (pattern.priority ?? "MEDIUM").toLowerCase()}>{pattern.priority ?? "SIGNAL"}</span><span className="signal-category">{patternCategory(pattern)}</span><strong>{cleanPatternText(pattern.title, initiativeNames)}</strong></div>
                                                 <span>{pattern.evidence_count} linked pilot{pattern.evidence_count === 1 ? "" : "s"}</span>
                                             </div>
                                             <div className="pattern-card-grid">
-                                                <div><small>Impact</small><p>{pattern.why_it_matters || "Refresh insights to generate the operational consequence."}</p></div>
-                                                <div><small>Suggested admin action</small><p>{pattern.recommended_action || "Refresh insights to generate a specific administrator action."}</p></div>
+                                                <div><small>Impact</small><p>{cleanPatternText(pattern.why_it_matters || "Refresh insights to generate the operational consequence.", initiativeNames)}</p></div>
+                                                <div><small>Suggested admin action</small><p>{cleanPatternText(pattern.recommended_action || "Refresh insights to generate a specific administrator action.", initiativeNames)}</p></div>
                                             </div>
                                             <details>
                                                 <summary>View evidence and affected pilots</summary>
-                                                <p>{pattern.finding}</p>
+                                                <p>{cleanPatternText(pattern.finding, initiativeNames)}</p>
                                                 <div className="linked-pilots">{pattern.supporting_initiative_ids.map((id) => initiativeNames.has(id) ? (
                                                     <button type="button" key={id} onClick={() => onOpenInitiative?.(id)}>{initiativeNames.get(id)}</button>
-                                                ) : <span key={id}>{id.slice(0, 8)}</span>)}</div>
+                                                ) : <span key={id}>Linked pilot</span>)}</div>
                                             </details>
                                         </article>
                                     ))}

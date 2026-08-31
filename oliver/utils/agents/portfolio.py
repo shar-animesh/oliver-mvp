@@ -71,7 +71,7 @@ Avoid generic advice such as "review the initiatives". Recommendations must be a
 Do not instruct the administrator to apply the most advanced gate outcome, merge or delete records, or place a formal hold.
 Flag conflicting evidence or decisions for governed human resolution instead.
 """.strip()
-_REPORT_CONTRACT_VERSION = "2026-08-31-admin-brief-v3"
+_REPORT_CONTRACT_VERSION = "2026-08-31-admin-brief-v4"
 _RAW_IDENTIFIER_RE = re.compile(r"\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b", re.IGNORECASE)
 
 
@@ -111,6 +111,7 @@ class PortfolioIntelligenceAgent:
             store=False,
         )
         report = parse_structured_output(response, PortfolioInsightReport)
+        self._sanitize_prose(report, {UUID(item["id"]): str(item["title"]) for item in snapshot["initiatives"]})
         self._validate_citations(report, {UUID(item["id"]) for item in snapshot["initiatives"]})
         record = PortfolioInsightReportDb(
             input_fingerprint=fingerprint,
@@ -135,13 +136,33 @@ class PortfolioIntelligenceAgent:
         return PortfolioAgentResult(record=record, report=report, reused=False)
 
     @staticmethod
+    def _sanitize_prose(report: PortfolioInsightReport, titles_by_id: dict[UUID, str]) -> None:
+        """Keep model slips from exposing internal IDs or lifecycle enums."""
+        for item in [*report.patterns, *report.recurring_blockers, *report.possible_duplicates]:
+            for field_name in ("title", "finding", "why_it_matters", "recommended_action"):
+                value = getattr(item, field_name)
+                for identifier, title in titles_by_id.items():
+                    replacement = "affected pilot" if field_name == "title" else title
+                    value = re.sub(re.escape(str(identifier)), replacement, value, flags=re.IGNORECASE)
+                    value = re.sub(rf"\b{re.escape(str(identifier).split('-', 1)[0])}\b", replacement, value, flags=re.IGNORECASE)
+                value = (
+                    value.replace("HOLD_FOR_EVIDENCE", "more evidence required")
+                    .replace("CONDITIONAL_ADVANCE", "advance with conditions")
+                    .replace("HOLD_FOR_REVIEW", "human review")
+                )
+                setattr(item, field_name, value)
+
+    @staticmethod
     def _validate_citations(report: PortfolioInsightReport, valid_ids: set[UUID]) -> None:
         for item in [*report.patterns, *report.recurring_blockers, *report.possible_duplicates]:
             cited = set(item.supporting_initiative_ids)
             if not cited.issubset(valid_ids) or item.evidence_count != len(cited):
                 raise RuntimeError("Portfolio report contains invalid initiative citations")
             prose = " ".join((item.title, item.finding, item.why_it_matters, item.recommended_action))
-            if _RAW_IDENTIFIER_RE.search(prose) or any(token in prose for token in ("HOLD_FOR_EVIDENCE", "CONDITIONAL_ADVANCE", "HOLD_FOR_REVIEW")):
+            cited_prefixes = tuple(str(identifier).split("-", 1)[0].lower() for identifier in cited)
+            if _RAW_IDENTIFIER_RE.search(prose) or any(prefix and prefix in prose.lower() for prefix in cited_prefixes) or any(
+                token in prose for token in ("HOLD_FOR_EVIDENCE", "CONDITIONAL_ADVANCE", "HOLD_FOR_REVIEW")
+            ):
                 raise RuntimeError("Portfolio report exposes an internal identifier or lifecycle enum in prose")
 
     @staticmethod
