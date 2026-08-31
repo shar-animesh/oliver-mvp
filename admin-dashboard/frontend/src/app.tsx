@@ -9,18 +9,21 @@ import AssessmentLab from "./pages/assessment-lab";
 import EmailThreads from "./pages/email-threads";
 import InitiativeDetail from "./pages/initiative-detail";
 import Initiatives from "./pages/initiatives";
+import Intelligence from "./pages/intelligence";
 
-type Workspace = "portfolio" | "conversations" | "assessment";
+type Workspace = "portfolio" | "conversations" | "assessment" | "patterns" | "scout";
 
 const workspaceDetails: Record<Workspace, { eyebrow: string; title: string }> = {
     portfolio: { eyebrow: "Portfolio", title: "Initiative lifecycle" },
     conversations: { eyebrow: "Operations", title: "Conversations and assessments" },
     assessment: { eyebrow: "Quality assurance", title: "Assessment laboratory" },
+    patterns: { eyebrow: "Intelligence", title: "Patterns across initiatives" },
+    scout: { eyebrow: "Intelligence", title: "Scout candidate queue" },
 };
 
 function workspaceFromLocation(): Workspace {
     const candidate = new URLSearchParams(window.location.search).get("workspace");
-    return candidate === "conversations" || candidate === "assessment" ? candidate : "portfolio";
+    return candidate === "conversations" || candidate === "assessment" || candidate === "patterns" || candidate === "scout" ? candidate : "portfolio";
 }
 
 function queryValue(name: string): string | null {
@@ -57,6 +60,22 @@ function LabIcon() {
     return (
         <svg aria-hidden="true" viewBox="0 0 20 20">
             <path d="M7 2.5h6V4h-1v3.15l3.76 6.27A2.67 2.67 0 0 1 13.47 17H6.53a2.67 2.67 0 0 1-2.29-3.58L8 7.15V4H7V2.5Zm2.5 5.07-3.97 6.62a1.17 1.17 0 0 0 1 1.76h6.94a1.17 1.17 0 0 0 1-1.76L10.5 7.57V4h-1v3.57Zm-2.12 5.18h5.24l.9 1.5H6.48l.9-1.5Z" />
+        </svg>
+    );
+}
+
+function PatternIcon() {
+    return (
+        <svg aria-hidden="true" viewBox="0 0 20 20">
+            <path d="M3 4.5h14v2H3v-2Zm0 4.5h9v2H3V9Zm0 4.5h14v2H3v-2Z" />
+        </svg>
+    );
+}
+
+function ScoutIcon() {
+    return (
+        <svg aria-hidden="true" viewBox="0 0 20 20">
+            <path d="m10 2.2 6.7 7.8-6.7 7.8L3.3 10 10 2.2Zm0 2.3L5.6 10l4.4 5.5 4.4-5.5L10 4.5Z" />
         </svg>
     );
 }
@@ -98,18 +117,14 @@ function SignIn({ onAuthenticated }: { onAuthenticated: (session: AdminSession) 
             <div className="signin-layout">
                 <section className="signin-story" aria-label="Oliver overview">
                     <div className="signin-brand">
-                        <img
-                            className="signin-logo"
-                            src="https://www.siemens-energy.com/content/dam/siemensenergy-aem/images/logo/SE_Logo_White.png"
-                            alt="Siemens Energy"
-                        />
+                        <span className="energy-wordmark" aria-label="Siemens Energy"><strong>SIEMENS</strong><span>energy</span></span>
                         <span className="brand-divider" aria-hidden="true" />
                         <span className="oliver-wordmark">Oliver<small>Initiative operations</small></span>
                     </div>
                     <div className="signin-story-copy">
                         <p className="eyebrow">Siemens Energy / internal workspace</p>
-                        <h1>Move every idea forward with confidence.</h1>
-                        <p>One calm view of pilots, evidence, assessments and the decisions that keep innovation moving.</p>
+                        <h1>Review pilot decisions with clarity.</h1>
+                        <p>One place for pilot progress, evidence, assessments and governed actions.</p>
                     </div>
                     <div className="signin-story-footer">
                         <span className="secure-indicator"><i /> Secure administrator access</span>
@@ -117,11 +132,6 @@ function SignIn({ onAuthenticated }: { onAuthenticated: (session: AdminSession) 
                     </div>
                 </section>
                 <section className="signin-panel" aria-labelledby="signin-title">
-                <img
-                    className="signin-logo"
-                    src="https://www.siemens-energy.com/content/dam/siemensenergy-aem/images/logo/SE_Logo_White.png"
-                    alt="Siemens Energy"
-                />
                 <p className="eyebrow">Oliver administration</p>
                 <h1 id="signin-title">Welcome back</h1>
                 <p className="signin-intro">Sign in to review pilot progress, assessments and governed actions.</p>
@@ -223,11 +233,7 @@ function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOu
             </a>
             <aside className="sidebar">
                 <div className="brand-lockup">
-                    <img
-                        className="company-logo"
-                        src="https://www.siemens-energy.com/content/dam/siemensenergy-aem/images/logo/SE_Logo_White.png"
-                        alt="Siemens Energy"
-                    />
+                    <span className="energy-wordmark" aria-label="Siemens Energy"><strong>SIEMENS</strong><span>energy</span></span>
                     <div>
                         <strong>Oliver</strong>
                         <small>Initiative operations</small>
@@ -267,6 +273,28 @@ function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOu
                     ) : null}
                 </nav>
 
+                <nav className="primary-nav secondary-nav" aria-label="Intelligence navigation">
+                    <p className="nav-label">Intelligence</p>
+                    <button
+                        type="button"
+                        className={workspace === "patterns" ? "active" : ""}
+                        aria-current={workspace === "patterns" ? "page" : undefined}
+                        title="Patterns across initiatives"
+                        onClick={() => openWorkspace("patterns")}>
+                        <PatternIcon />
+                        <span>Patterns</span>
+                    </button>
+                    <button
+                        type="button"
+                        className={workspace === "scout" ? "active" : ""}
+                        aria-current={workspace === "scout" ? "page" : undefined}
+                        title="Scout candidate queue"
+                        onClick={() => openWorkspace("scout")}>
+                        <ScoutIcon />
+                        <span>Scout</span>
+                    </button>
+                </nav>
+
                 <div className="sidebar-footer">
                     <span>Siemens Energy</span>
                     <small>Internal use only</small>
@@ -300,8 +328,10 @@ function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOu
                         initiativeId ? <InitiativeDetail key={initiativeId} initiativeId={initiativeId} onBack={() => openWorkspace("portfolio")} onOpenThread={openThread} /> : <Initiatives onOpenInitiative={openInitiative} />
                     ) : workspace === "conversations" ? (
                         <EmailThreads key={threadId || "conversation-inbox"} initialThreadId={threadId} onOpenInitiative={openInitiative} />
-                    ) : (
+                    ) : workspace === "assessment" ? (
                         <AssessmentLab />
+                    ) : (
+                        <Intelligence mode={workspace} />
                     )}
                 </main>
             </div>

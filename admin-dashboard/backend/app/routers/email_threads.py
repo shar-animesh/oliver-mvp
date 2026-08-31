@@ -62,7 +62,9 @@ def list_email_threads(database: Session = Depends(get_db)) -> List[EmailThreadS
             CanonicalAssessmentDb.current_stage,
             CanonicalAssessmentDb.gate_outcome,
             CanonicalAssessmentDb.rating,
-            func.row_number().over(partition_by=OliverRunDb.thread_id, order_by=OliverRunDb.created_at.desc()).label("row_number"),
+            func.row_number()
+            .over(partition_by=OliverRunDb.thread_id, order_by=(OliverRunDb.created_at.desc(), OliverRunDb.id.desc()))
+            .label("row_number"),
         )
         .join(OliverRunDb, OliverRunDb.id == CanonicalAssessmentDb.run_id)
         .subquery()
@@ -91,7 +93,7 @@ def list_email_threads(database: Session = Depends(get_db)) -> List[EmailThreadS
             latest_assessments,
             (latest_assessments.c.thread_id == EmailThreadDb.id) & (latest_assessments.c.row_number == 1),
         )
-        .order_by(message_counts.c.last_activity_at.desc())
+        .order_by(message_counts.c.last_activity_at.desc().nullslast(), EmailThreadDb.updated_at.desc(), EmailThreadDb.id.desc())
     ).all()
     return [
         EmailThreadSummaryResponse(

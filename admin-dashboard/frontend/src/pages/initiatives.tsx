@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import MetricCard from "../components/metric-card";
 import { formatDate } from "../lib/format";
-import type { InitiativeSummary, IntelligenceOverview } from "../lib/models";
+import type { InitiativeSummary } from "../lib/models";
 
 interface InitiativesProps {
     onOpenInitiative: (initiativeId: string) => void;
@@ -16,24 +16,18 @@ export default function Initiatives({ onOpenInitiative }: InitiativesProps) {
     const [initiatives, setInitiatives] = useState<InitiativeSummary[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const [intelligence, setIntelligence] = useState<IntelligenceOverview | null>(null);
     const [stageFilter, setStageFilter] = useState("ALL");
     const [query, setQuery] = useState("");
 
     useEffect(() => {
         let active = true;
-        void Promise.allSettled([api.listInitiatives(), api.getIntelligence()]).then(([initiativeResult, intelligenceResult]) => {
+        void api.listInitiatives().then((value) => {
             if (!active) return;
-            if (initiativeResult.status === "fulfilled") setInitiatives(initiativeResult.value);
-            if (intelligenceResult.status === "fulfilled") setIntelligence(intelligenceResult.value);
-
-            if (initiativeResult.status === "rejected") {
-                const reason: unknown = initiativeResult.reason;
-                setError(reason instanceof Error ? reason.message : "Unable to load initiatives");
-            } else if (intelligenceResult.status === "rejected") {
-                setError("Portfolio intelligence is temporarily unavailable; the initiative register remains available.");
-            }
-            setLoading(false);
+            setInitiatives(value);
+        }).catch((reason: unknown) => {
+            if (active) setError(reason instanceof Error ? reason.message : "Unable to load initiatives");
+        }).finally(() => {
+            if (active) setLoading(false);
         });
         return () => {
             active = false;
@@ -50,6 +44,10 @@ export default function Initiatives({ onOpenInitiative }: InitiativesProps) {
             review: initiatives.reduce((total, initiative) => total + initiative.pending_review_count, 0),
             held: initiatives.filter((initiative) => initiative.is_on_hold).length,
             average,
+            latestActivity: initiatives.reduce<string | null>((latest, initiative) => {
+                if (!latest || new Date(initiative.updated_at).getTime() > new Date(latest).getTime()) return initiative.updated_at;
+                return latest;
+            }, null),
         };
     }, [initiatives]);
 
@@ -80,7 +78,7 @@ export default function Initiatives({ onOpenInitiative }: InitiativesProps) {
                 </div>
                 <div className="refresh-note">
                     <span className={`status-dot${error ? " status-dot-error" : loading ? " status-dot-loading" : ""}`} />
-                    {loading ? "Refreshing…" : error ? "Data connection needs attention" : "Connected to live data"}
+                    {loading ? "Refreshing..." : error ? "Data connection needs attention" : metrics.latestActivity ? <><span>Latest update</span><time dateTime={metrics.latestActivity}>{formatDate(metrics.latestActivity)}</time></> : "Connected to live data"}
                 </div>
             </div>
 
@@ -177,57 +175,6 @@ export default function Initiatives({ onOpenInitiative }: InitiativesProps) {
                 ) : null}
             </section>
 
-            <div className="intelligence-grid">
-                <section className="panel intelligence-panel">
-                    <div className="panel-heading">
-                        <div>
-                            <p className="eyebrow">Portfolio insights</p>
-                            <h3>Patterns across initiatives</h3>
-                        </div>
-                    </div>
-                    {intelligence?.latest_portfolio_insight ? (
-                        <div className="intelligence-body">
-                            <p>{intelligence.latest_portfolio_insight.report.executive_summary}</p>
-                            <ul>
-                                {intelligence.latest_portfolio_insight.report.patterns.map((pattern) => (
-                                    <li key={pattern.title}>
-                                        <strong>{pattern.title}</strong>
-                                        <span>{pattern.finding}</span>
-                                        <small>{pattern.evidence_count} cited initiatives</small>
-                                    </li>
-                                ))}
-                            </ul>
-                            <small>Generated {formatDate(intelligence.latest_portfolio_insight.created_at)}</small>
-                        </div>
-                    ) : (
-                        <p className="empty-state">No portfolio insights are available for the current data.</p>
-                    )}
-                </section>
-
-                <section className="panel intelligence-panel">
-                    <div className="panel-heading">
-                        <div>
-                            <p className="eyebrow">Scout</p>
-                            <h3>Candidate queue</h3>
-                        </div>
-                        <span className="refresh-note">{intelligence?.scout_candidates.length ?? 0} open</span>
-                    </div>
-                    {intelligence?.scout_candidates.length ? (
-                        <div className="scout-list">
-                            {intelligence.scout_candidates.map((candidate) => (
-                                <article key={candidate.id}>
-                                    <span>{candidate.source_system}</span>
-                                    <strong>{candidate.title}</strong>
-                                    <p>{candidate.summary}</p>
-                                    <small>{Math.round(candidate.confidence * 100)}% classification confidence</small>
-                                </article>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="empty-state">No Scout candidates are waiting for review.</p>
-                    )}
-                </section>
-            </div>
         </section>
     );
 }

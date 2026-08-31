@@ -26,6 +26,7 @@ from app.utils.models.api import (
 from app.utils.postgres import (
     AuditEventDb,
     CanonicalAssessmentDb,
+    EmailMessageDb,
     EmailThreadDb,
     EvidenceVersionDb,
     InitiativeDb,
@@ -77,6 +78,18 @@ def _summary_rows(database: Session, initiative_id: Optional[UUID] = None) -> Li
         .where(CanonicalAssessmentDb.initiative_id.is_not(None))
         .subquery()
     )
+    latest_message_activity = (
+        select(func.max(EmailMessageDb.received_at))
+        .join(EmailThreadDb, EmailThreadDb.id == EmailMessageDb.thread_id)
+        .where(EmailThreadDb.initiative_id == InitiativeDb.id)
+        .correlate(InitiativeDb)
+        .scalar_subquery()
+    )
+    effective_updated_at = func.greatest(
+        InitiativeDb.updated_at,
+        func.coalesce(latest_message_activity, InitiativeDb.updated_at),
+        func.coalesce(latest_assessment.c.created_at, InitiativeDb.updated_at),
+    )
     statement = (
         select(
             InitiativeDb,
@@ -92,6 +105,7 @@ def _summary_rows(database: Session, initiative_id: Optional[UUID] = None) -> Li
             latest_assessment.c.gate_outcome,
             latest_assessment.c.rating,
             latest_assessment.c.created_at,
+            effective_updated_at,
         )
         .outerjoin(evidence_counts, evidence_counts.c.initiative_id == InitiativeDb.id)
         .outerjoin(review_counts, review_counts.c.initiative_id == InitiativeDb.id)
@@ -99,7 +113,7 @@ def _summary_rows(database: Session, initiative_id: Optional[UUID] = None) -> Li
             latest_assessment,
             (latest_assessment.c.initiative_id == InitiativeDb.id) & (latest_assessment.c.row_number == 1),
         )
-        .order_by(InitiativeDb.updated_at.desc())
+        .order_by(effective_updated_at.desc(), InitiativeDb.id.desc())
     )
     if initiative_id is not None:
         statement = statement.where(InitiativeDb.id == initiative_id)
@@ -107,7 +121,7 @@ def _summary_rows(database: Session, initiative_id: Optional[UUID] = None) -> Li
 
 
 def _to_summary(row: Row) -> InitiativeSummaryResponse:
-    initiative, primary_thread_id, evidence_count, review_count, score, gate, rating, assessed_at = row
+    initiative, primary_thread_id, evidence_count, review_count, score, gate, rating, assessed_at, effective_updated_at = row
     days_in_stage = max(0, (datetime.now(timezone.utc) - initiative.stage_entered_at).days)
     return InitiativeSummaryResponse(
         id=initiative.id,
@@ -128,7 +142,7 @@ def _to_summary(row: Row) -> InitiativeSummaryResponse:
         latest_rating=rating,
         latest_assessment_at=assessed_at,
         stage_entered_at=initiative.stage_entered_at,
-        updated_at=initiative.updated_at,
+        updated_at=effective_updated_at,
     )
 
 
