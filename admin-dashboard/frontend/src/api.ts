@@ -58,6 +58,8 @@ export const api = {
         request<Record<string, unknown>>("/commands/portfolio-insights", { method: "POST" }),
     listEmailThreads: (): Promise<EmailThreadSummary[]> => request<EmailThreadSummary[]>("/email-threads"),
     getEmailThread: (id: string): Promise<EmailThreadDetail> => request<EmailThreadDetail>(`/email-threads/${id}`),
+    getEmailMessageContent: (threadId: string, messageId: string): Promise<{ id: string; content_html: string | null }> =>
+        request<{ id: string; content_html: string | null }>(`/email-threads/${threadId}/messages/${messageId}`),
     runAssessmentTest: (input: AssessmentTestInput): Promise<AssessmentTestResult> =>
         request<AssessmentTestResult>("/commands/assessment-test", {
             method: "POST",

@@ -7,7 +7,7 @@ import re
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -16,6 +16,7 @@ from app.utils.email_content import current_message_text, html_to_text
 from app.utils.models.api import (
     CanonicalAssessmentResponse,
     DimensionScoreResponse,
+    EmailMessageContentResponse,
     EmailMessageResponse,
     EmailThreadDetailResponse,
     EmailThreadSummaryResponse,
@@ -230,6 +231,7 @@ def list_email_threads(database: Session = Depends(get_db)) -> List[EmailThreadS
 @router.get("/{thread_id}", response_model=EmailThreadDetailResponse)
 def get_email_thread(
     thread_id: UUID,
+    include_content: bool = Query(default=False),
     database: Session = Depends(get_db),  # noqa: B008
 ) -> EmailThreadDetailResponse:
     """Return one complete email conversation and its Oliver decisions."""
@@ -273,7 +275,7 @@ def get_email_thread(
             sender_email=message.sender_email,
             recipient_emails=message.recipient_emails,
             subject=message.subject,
-            content_html=_display_content(message),
+            content_html=_display_content(message) if include_content else None,
             received_at=message.received_at,
             message_kind=_message_kind(message, is_followup_inbound=is_followup_inbound),
         )
@@ -345,3 +347,18 @@ def get_email_thread(
             for run in thread.runs
         ],
     )
+
+
+@router.get("/{thread_id}/messages/{message_id}", response_model=EmailMessageContentResponse)
+def get_email_message_content(
+    thread_id: UUID,
+    message_id: UUID,
+    database: Session = Depends(get_db),  # noqa: B008
+) -> EmailMessageContentResponse:
+    """Load one reader-facing message body on demand."""
+    message = database.scalar(
+        select(EmailMessageDb).where(EmailMessageDb.id == message_id, EmailMessageDb.thread_id == thread_id)
+    )
+    if message is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Email message not found")
+    return EmailMessageContentResponse(id=message.id, content_html=_display_content(message))

@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 
+import { api } from "../api";
 import type { EmailThreadDetail } from "../lib/models";
 import { dimensionLabel, formatDate, formatGate, initials } from "../lib/format";
 
@@ -15,6 +16,10 @@ interface ThreadDetailProps {
 
 export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInitiative }: ThreadDetailProps) {
     const [expandedMessageId, setExpandedMessageId] = useState<string | null>(null);
+    const [messageContent, setMessageContent] = useState<Record<string, string | null>>(() =>
+        Object.fromEntries(thread.messages.filter((message) => message.content_html !== null).map((message) => [message.id, message.content_html])),
+    );
+    const [loadingMessageId, setLoadingMessageId] = useState<string | null>(null);
     // A conversation can have follow-up runs that intentionally do not create an
     // assessment (for example, a clarification or a NO_REPLY decision).  The
     // latest processing run is still useful for delivery telemetry, but it must
@@ -56,6 +61,24 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
         link.click();
         link.remove();
         URL.revokeObjectURL(url);
+    }
+
+    async function toggleMessage(messageId: string): Promise<void> {
+        if (expandedMessageId === messageId) {
+            setExpandedMessageId(null);
+            return;
+        }
+        setExpandedMessageId(messageId);
+        if (Object.prototype.hasOwnProperty.call(messageContent, messageId)) return;
+        setLoadingMessageId(messageId);
+        try {
+            const content = await api.getEmailMessageContent(thread.id, messageId);
+            setMessageContent((current) => ({ ...current, [messageId]: content.content_html }));
+        } catch {
+            setExpandedMessageId(null);
+        } finally {
+            setLoadingMessageId((current) => current === messageId ? null : current);
+        }
     }
     const stageDisplay = assessment
         ? assessment.recommended_next_stage
@@ -225,28 +248,30 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
                                                 type="button"
                                                 className="message-toggle"
                                                 aria-expanded={expandedMessageId === message.id}
-                                                onClick={() => setExpandedMessageId((current) => current === message.id ? null : message.id)}>
-                                                {expandedMessageId === message.id ? "Hide message" : "View message"}
+                                                onClick={() => void toggleMessage(message.id)}>
+                                                {expandedMessageId === message.id ? "Hide message" : loadingMessageId === message.id ? "Loading…" : "View message"}
                                             </button>
-                                            {message.direction === "OUTBOUND" && message.content_html ? (
+                                            {message.direction === "OUTBOUND" && messageContent[message.id] ? (
                                                 <button
                                                     type="button"
                                                     className="download-button"
-                                                    onClick={() => downloadHtml(message.content_html, message.id, message.subject || thread.subject)}
+                                                    onClick={() => downloadHtml(messageContent[message.id] || null, message.id, message.subject || thread.subject)}
                                                     title="Download this Oliver reply as HTML">
                                                     Download HTML
                                                 </button>
                                             ) : null}
                                         </div>
                                     </div>
-                                    {expandedMessageId === message.id ? (
+                                    {expandedMessageId === message.id && loadingMessageId !== message.id ? (
                                         <iframe
                                             className="message-frame"
                                             loading="lazy"
                                             sandbox=""
-                                            srcDoc={message.content_html || "<p>No content recorded.</p>"}
+                                            srcDoc={messageContent[message.id] || "<p>No content recorded.</p>"}
                                             title={`${message.direction.toLowerCase()} email from ${message.sender_email || "Oliver"}`}
                                         />
+                                    ) : expandedMessageId === message.id ? (
+                                        <div className="message-collapsed">Loading message content…</div>
                                     ) : (
                                         <div className="message-collapsed">Message content is collapsed for a faster history view.</div>
                                     )}

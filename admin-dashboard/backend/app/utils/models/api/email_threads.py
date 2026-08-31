@@ -23,6 +23,13 @@ class EmailMessageResponse(BaseModel):
     message_kind: Literal["NEW", "REPLY", "FORWARDED", "OLIVER_RESPONSE"]
 
 
+class EmailMessageContentResponse(BaseModel):
+    """Deferred HTML payload for one message in a conversation."""
+
+    id: UUID
+    content_html: Optional[str]
+
+
 class RelatedIdeaResponse(BaseModel):
     """One semantic match supplied to an Oliver response."""
 
