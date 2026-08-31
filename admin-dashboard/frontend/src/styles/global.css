@@ -1450,6 +1450,29 @@ main {
     letter-spacing: .01em;
 }
 
+.message-toggle {
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 4px 8px;
+    color: var(--se-teal);
+    background: var(--white);
+    font-size: 0.59rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.message-toggle:hover {
+    border-color: var(--se-teal);
+    background: #eff9fa;
+}
+
+.message-collapsed {
+    padding: 12px 14px;
+    color: var(--neutral-500);
+    background: var(--white);
+    font-size: 0.65rem;
+}
+
 .message-frame {
     width: 100%;
     min-height: 320px;
@@ -2704,4 +2727,37 @@ main { width: 100%; max-width: none; margin: 0; padding: 34px clamp(24px, 4vw, 5
     .signin-story { padding: 34px 28px 28px; }
     .signin-story-copy h1 { font-size: 2.45rem; }
     .signin-panel { padding: 38px 28px; }
+}
+
+/* Focused shell: keep page chrome quiet and anchor the account affordance in
+   the navigation rail, following common admin-console patterns. */
+.topbar { display: none; }
+.workspace { min-height: 100vh; }
+.workspace > main { padding-top: 42px; }
+.brand-lockup { gap: 16px; }
+.energy-wordmark { width: 104px; flex-basis: 104px; font-size: 18px; line-height: .86; }
+.energy-wordmark span { font-size: 20px; }
+.brand-lockup strong { font-size: 1.12rem; }
+.sidebar-footer { display: block; margin-top: auto; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.16); }
+.sidebar-account { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; background: rgba(255,255,255,.07); }
+.sidebar-account .identity-avatar { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; border-radius: 50%; color: var(--se-navy); background: var(--se-lime); font-size: .7rem; font-weight: 800; }
+.sidebar-account-copy { min-width: 0; flex: 1; }
+.sidebar-account-copy strong, .sidebar-account-copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-account-copy strong { color: #fff; font-size: .73rem; font-weight: 700; }
+.sidebar-account-copy small { margin-top: 3px; color: #a8c3cd; font-size: .61rem; }
+.sidebar-signout { min-height: 30px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto; padding: 0 8px; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; color: #dce9ed; background: transparent; font-size: .62rem; font-weight: 700; cursor: pointer; }
+.sidebar-signout:hover { color: #fff; border-color: var(--se-cyan); background: rgba(117,201,212,.14); }
+.sidebar-signout svg { width: 16px; height: 16px; fill: currentColor; }
+.sidebar-signout-error { display: block; margin: 8px 4px 0; color: #ffb4b4; font-size: .62rem; line-height: 1.35; }
+.sidebar-legal { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; color: #8fa9b4; font-size: .6rem; }
+.sidebar-legal small { color: #718d98; }
+
+@media (max-width: 850px) {
+    .sidebar-footer { display: block; }
+    .sidebar-account { justify-content: center; padding: 8px 5px; }
+    .sidebar-account-copy, .sidebar-signout, .sidebar-signout-error, .sidebar-legal { display: none; }
+    .sidebar-account .identity-avatar { width: 36px; height: 36px; flex-basis: 36px; }
+    .energy-wordmark { width: 48px; flex-basis: 48px; font-size: 10px; }
+    .energy-wordmark span { font-size: 11px; }
+    .workspace > main { padding-top: 30px; }
 }

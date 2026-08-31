@@ -1,6 +1,8 @@
 // Path: src/pages/thread-detail.tsx
 // Description: Read-only detail view for one conversation and its canonical assessment.
 
+import { useState } from "react";
+
 import type { EmailThreadDetail } from "../lib/models";
 import { dimensionLabel, formatDate, formatGate, initials } from "../lib/format";
 
@@ -12,6 +14,7 @@ interface ThreadDetailProps {
 }
 
 export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInitiative }: ThreadDetailProps) {
+    const [expandedMessageId, setExpandedMessageId] = useState<string | null>(null);
     // A conversation can have follow-up runs that intentionally do not create an
     // assessment (for example, a clarification or a NO_REPLY decision).  The
     // latest processing run is still useful for delivery telemetry, but it must
@@ -23,6 +26,15 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
     const totalTokens = thread.runs.reduce((total, run) => total + (run.prompt_tokens || 0) + (run.completion_tokens || 0), 0);
     const scoredDimensionCount = assessment?.dimensions.filter((dimension) => dimension.value !== null).length ?? 0;
     const unknownDimensions = assessment?.dimensions.filter((dimension) => dimension.value === null).map((dimension) => dimension.dimension_label) ?? [];
+    // Defensive reader-side projection: older API records can still contain the
+    // same Oliver response more than once after a connector retry. Keep one
+    // copy in the visible history while preserving every distinct inbound reply.
+    const visibleMessages = thread.messages.filter((message, index, messages) => {
+        if (message.direction !== "OUTBOUND") return true;
+        const normalize = (value: string | null) => (value || "").replace(/\s+/g, " ").trim();
+        const signature = `${normalize(message.subject)}|${normalize(message.content_html)}`;
+        return messages.findIndex((candidate) => candidate.direction === "OUTBOUND" && `${normalize(candidate.subject)}|${normalize(candidate.content_html)}` === signature) === index;
+    });
 
     function messageKindLabel(kind: EmailThreadDetail["messages"][number]["message_kind"]): string {
         return {
@@ -192,12 +204,12 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
                         <div className="panel-heading">
                             <div>
                                 <p className="eyebrow">Communication history</p>
-                                <h3>{thread.messages.length} recorded messages</h3>
+                                <h3>{visibleMessages.length} recorded messages</h3>
                             </div>
                             <span className="refresh-note">{thread.runs.length} Oliver processing run{thread.runs.length === 1 ? "" : "s"}</span>
                         </div>
                         <div className="message-list">
-                            {thread.messages.map((message) => (
+                            {visibleMessages.map((message) => (
                                 <article className={`message-card message-${message.direction.toLowerCase()}`} key={message.id}>
                                     <div className="message-meta">
                                         <div className="avatar avatar-small">{initials(message.sender_email)}</div>
@@ -209,6 +221,13 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
                                         </div>
                                         <div className="message-actions">
                                             <time>{formatDate(message.received_at)}</time>
+                                            <button
+                                                type="button"
+                                                className="message-toggle"
+                                                aria-expanded={expandedMessageId === message.id}
+                                                onClick={() => setExpandedMessageId((current) => current === message.id ? null : message.id)}>
+                                                {expandedMessageId === message.id ? "Hide message" : "View message"}
+                                            </button>
                                             {message.direction === "OUTBOUND" && message.content_html ? (
                                                 <button
                                                     type="button"
@@ -220,12 +239,17 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
                                             ) : null}
                                         </div>
                                     </div>
-                                    <iframe
-                                        className="message-frame"
-                                        sandbox=""
-                                        srcDoc={message.content_html || "<p>No content recorded.</p>"}
-                                        title={`${message.direction.toLowerCase()} email from ${message.sender_email || "Oliver"}`}
-                                    />
+                                    {expandedMessageId === message.id ? (
+                                        <iframe
+                                            className="message-frame"
+                                            loading="lazy"
+                                            sandbox=""
+                                            srcDoc={message.content_html || "<p>No content recorded.</p>"}
+                                            title={`${message.direction.toLowerCase()} email from ${message.sender_email || "Oliver"}`}
+                                        />
+                                    ) : (
+                                        <div className="message-collapsed">Message content is collapsed for a faster history view.</div>
+                                    )}
                                 </article>
                             ))}
                         </div>
