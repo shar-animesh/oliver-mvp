@@ -121,11 +121,13 @@ class PortfolioIntelligenceAgent:
         initiatives = list(database.scalars(select(InitiativeDb).order_by(InitiativeDb.id)))
         ranked_assessments = (
             select(
-                CanonicalAssessmentDb.id.label("assessment_id"),
+                # Canonical assessments use the associated Oliver run as their
+                # primary key; there is no separate ``id`` column.
+                CanonicalAssessmentDb.run_id.label("assessment_id"),
                 func.row_number()
                 .over(
                     partition_by=CanonicalAssessmentDb.initiative_id,
-                    order_by=(CanonicalAssessmentDb.created_at.desc(), CanonicalAssessmentDb.id.desc()),
+                    order_by=(CanonicalAssessmentDb.created_at.desc(), CanonicalAssessmentDb.run_id.desc()),
                 )
                 .label("row_number"),
             )
@@ -135,7 +137,7 @@ class PortfolioIntelligenceAgent:
         assessments = list(
             database.scalars(
                 select(CanonicalAssessmentDb)
-                .join(ranked_assessments, ranked_assessments.c.assessment_id == CanonicalAssessmentDb.id)
+                .join(ranked_assessments, ranked_assessments.c.assessment_id == CanonicalAssessmentDb.run_id)
                 .where(ranked_assessments.c.row_number == 1)
             )
         )
