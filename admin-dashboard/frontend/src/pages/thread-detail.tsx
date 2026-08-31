@@ -349,12 +349,6 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
                                 <dd>{totalTokens ? totalTokens.toLocaleString() : "—"}</dd>
                             </div>
                             <div>
-                                <dt>Conversation ID</dt>
-                                <dd className="truncate" title={thread.conversation_id}>
-                                    {thread.conversation_id}
-                                </dd>
-                            </div>
-                            <div>
                                 <dt>Created</dt>
                                 <dd>{formatDate(thread.created_at)}</dd>
                             </div>
@@ -367,6 +361,15 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
                                 <dd>{thread.embedded_at ? `${thread.embedding_dimensions || 0} dimensions` : "Not indexed"}</dd>
                             </div>
                         </dl>
+                        <details className="technical-details">
+                            <summary>Technical diagnostics</summary>
+                            <dl className="record-list">
+                                <div>
+                                    <dt>Conversation reference</dt>
+                                    <dd className="truncate" title={thread.conversation_id}>{thread.conversation_id}</dd>
+                                </div>
+                            </dl>
+                        </details>
                     </section>
                 </aside>
             </div>
