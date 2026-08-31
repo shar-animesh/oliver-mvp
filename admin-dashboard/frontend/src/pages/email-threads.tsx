@@ -12,11 +12,12 @@ import ThreadDetail from "./thread-detail";
 interface EmailThreadsProps {
     initialThreadId: string | null;
     onOpenInitiative: (initiativeId: string) => void;
+    onOpenThread?: (threadId: string) => void;
 }
 
 type StatusFilter = "all" | "assessed" | "complete" | "needs-evidence" | "unassessed";
 
-export default function EmailThreads({ initialThreadId, onOpenInitiative }: EmailThreadsProps) {
+export default function EmailThreads({ initialThreadId, onOpenInitiative, onOpenThread }: EmailThreadsProps) {
     const [threads, setThreads] = useState<EmailThreadSummary[]>([]);
     const [selectedThread, setSelectedThread] = useState<EmailThreadDetail | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -85,9 +86,7 @@ export default function EmailThreads({ initialThreadId, onOpenInitiative }: Emai
 
     function closeThread(): void {
         setSelectedThread(null);
-        const url = new URL(window.location.href);
-        url.searchParams.delete("thread");
-        window.history.replaceState(null, "", url);
+        window.history.replaceState(null, "", "/conversations");
     }
 
     if (selectedThread) {
@@ -98,7 +97,10 @@ export default function EmailThreads({ initialThreadId, onOpenInitiative }: Emai
                 <ThreadDetail
                     thread={selectedThread}
                     onBack={closeThread}
-                    onOpenRelated={(id) => void openThread(id)}
+                    onOpenRelated={(id) => {
+                        if (onOpenThread) onOpenThread(id);
+                        else void openThread(id);
+                    }}
                     onOpenInitiative={onOpenInitiative}
                 />
             </>
@@ -217,7 +219,10 @@ export default function EmailThreads({ initialThreadId, onOpenInitiative }: Emai
                             <span aria-hidden="true" />
                         </div>
                         {filteredThreads.map((thread) => (
-                            <button className="data-row" role="row" key={thread.id} onClick={() => void openThread(thread.id)}>
+                            <button className="data-row" role="row" key={thread.id} onClick={() => {
+                                if (onOpenThread) onOpenThread(thread.id);
+                                else void openThread(thread.id);
+                            }}>
                                 <span className="initiative-cell" role="cell">
                                     <span className="initiative-mark" />
                                     <span>

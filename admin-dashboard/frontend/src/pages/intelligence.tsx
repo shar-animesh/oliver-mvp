@@ -167,6 +167,10 @@ export default function Intelligence({ mode, onOpenInitiative, adminName }: Inte
                                         {incompleteCount ? <small>{incompleteCount} assessed pilot{incompleteCount === 1 ? "" : "s"} still have an incomplete overall score.</small> : null}
                                     </div>
                                 </div>
+                                <div className="intelligence-summary-block">
+                                    <p className="eyebrow">Administrator summary</p>
+                                    <p className="intelligence-summary">{overview.latest_portfolio_insight.report.executive_summary}</p>
+                                </div>
                                 <div className="pattern-toolbar">
                                     <div><p className="eyebrow">Portfolio patterns</p><h4>Priority findings <span className="toolbar-count">{duplicateCount} overlap</span></h4></div>
                                     <div className="pattern-filters" role="group" aria-label="Filter findings">

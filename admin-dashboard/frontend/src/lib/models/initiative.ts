@@ -43,6 +43,9 @@ export interface InitiativeAssessmentSummary {
     rating: string;
     requires_human_review: boolean;
     transition_policy_version: string;
+    score_rationale?: string;
+    transition_rationale?: string;
+    dimensions?: Array<{ dimension_label?: string; state?: string; value?: number | null; summary?: string; gaps?: string[] }>;
     created_at: string;
 }
 

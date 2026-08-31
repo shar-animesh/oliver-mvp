@@ -306,6 +306,9 @@ def get_initiative(
                 rating=assessment.rating,
                 requires_human_review=assessment.requires_human_review,
                 transition_policy_version=assessment.transition_policy_version,
+                score_rationale=assessment.score_rationale,
+                transition_rationale=assessment.transition_rationale,
+                dimensions=assessment.dimensions,
                 created_at=assessment.created_at,
             )
             for assessment in assessments

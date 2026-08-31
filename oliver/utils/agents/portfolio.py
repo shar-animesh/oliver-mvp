@@ -57,6 +57,10 @@ Do not infer facts, financial values, delivery status, business units, or relati
 Every pattern, blocker, and duplicate group must cite the exact initiative IDs that support it.
 Set evidence_count to the number of distinct supporting_initiative_ids. Do not treat similar stages alone as duplication.
 Use plain language for an operations administrator. Return 4-6 high-value signals, not a catalogue.
+The executive_summary must be four to six short, reader-friendly sentences:
+explain what is currently in the portfolio, the strongest evidence-backed
+pattern, what that means operationally, and the next administrator action.
+Use ordinary business language and do not repeat a catalogue of pilot IDs.
 UUIDs may appear only in supporting_initiative_ids. Never place UUIDs or UUID fragments in any prose field.
 Never expose raw enum values. Translate HOLD_FOR_EVIDENCE to "more evidence required", CONDITIONAL_ADVANCE
 to "ready to advance with conditions", and ADVANCE to "ready to advance".

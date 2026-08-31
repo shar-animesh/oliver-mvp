@@ -20,6 +20,27 @@ function scoreLabel(initiative: InitiativeDetailModel): string {
     return "Not assessed";
 }
 
+function pilotSummary(initiative: InitiativeDetailModel, assessment: InitiativeDetailModel["assessments"][number] | undefined): string {
+    const dimensions = assessment?.dimensions ?? [];
+    const supported = dimensions
+        .filter((dimension) => dimension.state === "SATISFIED" && dimension.dimension_label)
+        .map((dimension) => dimension.dimension_label as string);
+    const gaps = dimensions
+        .flatMap((dimension) => dimension.gaps ?? [])
+        .filter(Boolean)
+        .slice(0, 2);
+    const evidenceSentence = initiative.evidence_version_count
+        ? `Oliver has recorded ${initiative.evidence_version_count} evidence version${initiative.evidence_version_count === 1 ? "" : "s"}${supported.length ? `, with positive support for ${supported.join(", ")}` : ""}.`
+        : "No evidence version has been recorded yet, so the pilot cannot be judged beyond its initial description.";
+    const meaningSentence = assessment
+        ? `The current assessment is ${assessment.composite_score === null ? "incomplete" : `${assessment.composite_score} out of 100`} and is marked ${formatGate(assessment.gate_outcome).toLowerCase()}.`
+        : "Oliver has not recorded an assessment for this pilot yet.";
+    const nextSentence = gaps.length
+        ? `Next, the submission needs clearer evidence for ${gaps.join(" and ")}.`
+        : assessment?.transition_rationale || "Next, add the evidence required for the current stage and request another assessment.";
+    return `This pilot is exploring ${initiative.title}. ${evidenceSentence} ${meaningSentence} ${nextSentence}`;
+}
+
 export default function InitiativeDetail({ initiativeId, onBack, onOpenThread }: InitiativeDetailProps) {
     const [initiative, setInitiative] = useState<InitiativeDetailModel | null>(null);
     const [loading, setLoading] = useState(true);
@@ -100,6 +121,10 @@ export default function InitiativeDetail({ initiativeId, onBack, onOpenThread }:
                             <span className={`status-badge ${initiative.is_on_hold ? "status-pending" : "status-complete"}`}>
                                 <span /> {initiative.is_on_hold ? "On hold" : formatGate(initiative.latest_gate_outcome)}
                             </span>
+                        </div>
+                        <div className="pilot-summary-block">
+                            <p className="eyebrow">Pilot summary</p>
+                            <p>{pilotSummary(initiative, latestAssessment)}</p>
                         </div>
                         <div className="assessment-readout">
                             <span className="readout-label">Current position</span>

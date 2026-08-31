@@ -99,9 +99,11 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
         .replace(/[._-]+/g, " ")
         .replace(/(^|\s)\S/g, (letter) => letter.toUpperCase());
     const requestSubject = (thread.subject || "this pilot idea").replace(/^(re|reply|fw|fwd):\s*/i, "");
+    const scoredDimensions = assessment?.dimensions.filter((dimension) => dimension.state === "SATISFIED" && dimension.dimension_label).map((dimension) => dimension.dimension_label) ?? [];
+    const missingDimensions = assessment?.dimensions.filter((dimension) => dimension.value === null && dimension.dimension_label).map((dimension) => dimension.dimension_label) ?? [];
     const conversationSummary = assessment
-        ? participantName + " from Siemens Energy sent this on " + formatDate(firstInbound?.received_at || thread.created_at) + " about “" + requestSubject + "”. Oliver assessed it at " + (assessment.composite_score ?? "an incomplete score") + " and returned “" + formatGate(assessment.gate_outcome) + "”."
-        : participantName + " from Siemens Energy sent this on " + formatDate(firstInbound?.received_at || thread.created_at) + " about “" + requestSubject + "”. Oliver has not recorded an assessment for it yet.";
+        ? `${participantName} from Siemens Energy is exploring “${requestSubject}”. The conversation contains ${thread.messages.filter((message) => message.direction === "INBOUND").length} participant update${thread.messages.filter((message) => message.direction === "INBOUND").length === 1 ? "" : "s"}, and the recorded evidence${scoredDimensions.length ? ` supports ${scoredDimensions.slice(0, 3).join(", ")}` : " is still limited"}. Oliver’s current assessment is ${assessment.composite_score === null ? "incomplete" : `${assessment.composite_score} out of 100`} and ${formatGate(assessment.gate_outcome).toLowerCase()}. ${missingDimensions.length ? `The next useful input is evidence for ${missingDimensions.slice(0, 2).join(" and ")}.` : assessment.transition_rationale || "The next step is to add stage-appropriate evidence and continue the review."}`
+        : `${participantName} from Siemens Energy is exploring “${requestSubject}”. The conversation has been recorded, but Oliver has not yet produced an assessment. Add the pilot’s scope, evidence, and expected outcome so it can be evaluated. The next step is to send the missing context in the same email thread.`;
 
     return (
         <section className="detail-view" aria-labelledby="initiative-title">

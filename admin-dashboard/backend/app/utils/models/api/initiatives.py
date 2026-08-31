@@ -7,11 +7,11 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class InitiativeAssessmentSummary(BaseModel):
-    """One historical canonical assessment without duplicating dimension detail."""
+    """One historical assessment with the short evidence readout used by admins."""
 
     run_id: UUID
     thread_id: Optional[UUID]
@@ -24,6 +24,9 @@ class InitiativeAssessmentSummary(BaseModel):
     rating: str
     requires_human_review: bool
     transition_policy_version: str
+    score_rationale: str = ""
+    transition_rationale: str = ""
+    dimensions: List[Dict[str, object]] = Field(default_factory=list)
     created_at: datetime
 
 

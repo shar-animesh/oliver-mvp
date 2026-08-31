@@ -2630,6 +2630,8 @@ main { width: 100%; max-width: none; margin: 0; padding: 34px clamp(24px, 4vw, 5
 .conversation-summary { margin-bottom: 18px; padding: 18px 22px; border-left: 3px solid var(--se-cyan); }
 .conversation-summary h3 { margin-top: 5px; color: var(--se-ink); }
 .conversation-summary > p:last-child { max-width: 900px; margin-top: 8px; color: var(--se-ink); line-height: 1.55; }
+.pilot-summary-block { margin: 18px 0; padding: 16px 18px; border-left: 3px solid var(--se-cyan); background: #f4f9fa; }
+.pilot-summary-block p:last-child { max-width: 900px; margin: 7px 0 0; color: var(--se-ink); line-height: 1.6; }
 .pattern-card, .scout-desk-row { min-width: 0; padding: 14px 16px; border: 1px solid var(--se-line); background: #fbfcfc; }
 .pattern-card-heading, .pattern-card-title, .scout-desk-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; min-width: 0; }
 .pattern-card-title { justify-content: flex-start; align-items: center; }
@@ -2735,6 +2737,7 @@ main { width: 100%; max-width: none; margin: 0; padding: 34px clamp(24px, 4vw, 5
 .workspace { min-height: 100vh; }
 .workspace > main { padding-top: 42px; }
 .brand-lockup { gap: 16px; }
+.siemens-energy-logo { display: block; width: 112px; height: auto; flex: 0 0 auto; object-fit: contain; object-position: left center; }
 .energy-wordmark { width: 104px; flex-basis: 104px; font-size: 18px; line-height: .86; }
 .energy-wordmark span { font-size: 20px; }
 .brand-lockup strong { font-size: 1.12rem; }
@@ -2754,10 +2757,13 @@ main { width: 100%; max-width: none; margin: 0; padding: 34px clamp(24px, 4vw, 5
 
 @media (max-width: 850px) {
     .sidebar-footer { display: block; }
-    .sidebar-account { justify-content: center; padding: 8px 5px; }
-    .sidebar-account-copy, .sidebar-signout, .sidebar-signout-error, .sidebar-legal { display: none; }
-    .sidebar-account .identity-avatar { width: 36px; height: 36px; flex-basis: 36px; }
+    .sidebar-account { justify-content: center; gap: 4px; padding: 8px 3px; }
+    .sidebar-account-copy, .sidebar-signout-error, .sidebar-legal { display: none; }
+    .sidebar-signout { width: 26px; padding: 0; }
+    .sidebar-signout span { display: none; }
+    .sidebar-account .identity-avatar { width: 30px; height: 30px; flex-basis: 30px; }
     .energy-wordmark { width: 48px; flex-basis: 48px; font-size: 10px; }
     .energy-wordmark span { font-size: 11px; }
+    .siemens-energy-logo { width: 48px; }
     .workspace > main { padding-top: 30px; }
 }

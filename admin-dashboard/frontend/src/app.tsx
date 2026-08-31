@@ -5,6 +5,7 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { api, configureAccessTokenProvider, type AdminSession } from "./api";
 import { authMode, getAccessToken, initializeAuthentication, signInWithEntra, signOutFromEntra } from "./auth";
+import { SIEMENS_ENERGY_LOGO } from "./assets/siemens-energy-logo";
 import AssessmentLab from "./pages/assessment-lab";
 import EmailThreads from "./pages/email-threads";
 import InitiativeDetail from "./pages/initiative-detail";
@@ -13,21 +14,14 @@ import Intelligence from "./pages/intelligence";
 
 type Workspace = "portfolio" | "conversations" | "assessment" | "patterns" | "scout";
 
-const workspaceDetails: Record<Workspace, { eyebrow: string; title: string }> = {
-    portfolio: { eyebrow: "Portfolio", title: "Initiative lifecycle" },
-    conversations: { eyebrow: "Operations", title: "Conversations and assessments" },
-    assessment: { eyebrow: "Quality assurance", title: "Assessment laboratory" },
-    patterns: { eyebrow: "Intelligence", title: "Patterns across initiatives" },
-    scout: { eyebrow: "Intelligence", title: "Scout candidate queue" },
-};
+type LocationState = { workspace: Workspace; initiativeId: string | null; threadId: string | null };
 
-function workspaceFromLocation(): Workspace {
-    const candidate = new URLSearchParams(window.location.search).get("workspace");
-    return candidate === "conversations" || candidate === "assessment" || candidate === "patterns" || candidate === "scout" ? candidate : "portfolio";
-}
-
-function queryValue(name: string): string | null {
-    return new URLSearchParams(window.location.search).get(name);
+function locationState(): LocationState {
+    const segments = window.location.pathname.split("/").filter(Boolean);
+    const candidate = segments[0] as Workspace | undefined;
+    const workspace: Workspace = candidate === "conversations" || candidate === "assessment" || candidate === "patterns" || candidate === "scout" || candidate === "portfolio" ? candidate : "portfolio";
+    const id = segments[1] || null;
+    return { workspace, initiativeId: workspace === "portfolio" ? id : null, threadId: workspace === "conversations" ? id : null };
 }
 
 function identityInitials(username: string): string {
@@ -117,7 +111,7 @@ function SignIn({ onAuthenticated }: { onAuthenticated: (session: AdminSession) 
             <div className="signin-layout">
                 <section className="signin-story" aria-label="Oliver overview">
                     <div className="signin-brand">
-                        <span className="energy-wordmark" aria-label="Siemens Energy"><strong>SIEMENS</strong><span>energy</span></span>
+                        <img className="siemens-energy-logo" src={SIEMENS_ENERGY_LOGO} alt="Siemens Energy" />
                         <span className="brand-divider" aria-hidden="true" />
                         <span className="oliver-wordmark">Oliver<small>Initiative operations</small></span>
                     </div>
@@ -178,30 +172,28 @@ function SignIn({ onAuthenticated }: { onAuthenticated: (session: AdminSession) 
 }
 
 function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOut: () => void }) {
-    const [workspace, setWorkspace] = useState<Workspace>(workspaceFromLocation);
-    const [initiativeId, setInitiativeId] = useState<string | null>(() => queryValue("initiative"));
-    const [threadId, setThreadId] = useState<string | null>(() => queryValue("thread"));
+    const initialLocation = locationState();
+    const [workspace, setWorkspace] = useState<Workspace>(initialLocation.workspace);
+    const [initiativeId, setInitiativeId] = useState<string | null>(initialLocation.initiativeId);
+    const [threadId, setThreadId] = useState<string | null>(initialLocation.threadId);
     const [signOutError, setSignOutError] = useState<string | null>(null);
     const canTestAssessment = session.roles.some((role) => role === "Oliver.Assessment.Test" || role === "Oliver.Platform.Admin");
 
     useEffect(() => {
         const syncWorkspace = () => {
-            setWorkspace(workspaceFromLocation());
-            setInitiativeId(queryValue("initiative"));
-            setThreadId(queryValue("thread"));
+            const next = locationState();
+            setWorkspace(next.workspace);
+            setInitiativeId(next.initiativeId);
+            setThreadId(next.threadId);
         };
         window.addEventListener("popstate", syncWorkspace);
         return () => window.removeEventListener("popstate", syncWorkspace);
     }, []);
 
     function openWorkspace(nextWorkspace: Workspace, options: { initiativeId?: string; threadId?: string } = {}): void {
-        const url = new URL(window.location.href);
-        url.searchParams.set("workspace", nextWorkspace);
-        if (options.initiativeId) url.searchParams.set("initiative", options.initiativeId);
-        else url.searchParams.delete("initiative");
-        if (options.threadId) url.searchParams.set("thread", options.threadId);
-        else url.searchParams.delete("thread");
-        window.history.pushState(null, "", url);
+        const id = nextWorkspace === "portfolio" ? options.initiativeId : nextWorkspace === "conversations" ? options.threadId : undefined;
+        const pathname = `/${nextWorkspace}${id ? `/${encodeURIComponent(id)}` : ""}`;
+        window.history.pushState(null, "", pathname);
         setWorkspace(nextWorkspace);
         setInitiativeId(options.initiativeId || null);
         setThreadId(options.threadId || null);
@@ -233,7 +225,7 @@ function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOu
             </a>
             <aside className="sidebar">
                 <div className="brand-lockup">
-                    <span className="energy-wordmark" aria-label="Siemens Energy"><strong>SIEMENS</strong><span>energy</span></span>
+                    <img className="siemens-energy-logo" src={SIEMENS_ENERGY_LOGO} alt="Siemens Energy" />
                     <div>
                         <strong>Oliver</strong>
                         <small>Initiative operations</small>
@@ -296,38 +288,31 @@ function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOu
                 </nav>
 
                 <div className="sidebar-footer">
-                    <span>Siemens Energy</span>
-                    <small>Internal use only</small>
+                    <div className="sidebar-account">
+                        <span className="identity-avatar" aria-hidden="true">{identityInitials(session.username)}</span>
+                        <div className="sidebar-account-copy">
+                            <strong>{session.username}</strong>
+                            <small>Authorized administrator</small>
+                        </div>
+                        <button className="sidebar-signout" type="button" onClick={() => void signOut()} aria-label="Sign out">
+                            <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M8 3.5h7.5v13H8V15h6V5H8V3.5ZM3 9.25h7v1.5H3v-1.5Zm2.75-3 1.06 1.06L4.87 9.25h5.13v1.5H4.87l1.94 1.94-1.06 1.06L2 10l2.75-2.75Z" /></svg>
+                            <span>Sign out</span>
+                        </button>
+                    </div>
+                    {signOutError ? <small className="sidebar-signout-error" role="alert">{signOutError}</small> : null}
+                    <div className="sidebar-legal">
+                        <span>Siemens Energy</span>
+                        <small>Internal use only</small>
+                    </div>
                 </div>
             </aside>
 
             <div className="workspace">
-                <header className="topbar">
-                    <div className="topbar-heading">
-                        <p className="eyebrow">
-                            Oliver administration <span aria-hidden="true">/</span> {workspaceDetails[workspace].eyebrow}
-                        </p>
-                        <h1>{workspaceDetails[workspace].title}</h1>
-                    </div>
-                    <div className="admin-identity">
-                        <span className="identity-avatar" aria-hidden="true">
-                            {identityInitials(session.username)}
-                        </span>
-                        <span className="identity-copy">
-                            <strong>{session.username}</strong>
-                            <small>Authorized administrator</small>
-                        </span>
-                        <button type="button" onClick={() => void signOut()}>
-                            Sign out
-                        </button>
-                        {signOutError ? <small role="alert">{signOutError}</small> : null}
-                    </div>
-                </header>
                 <main id="main-content" tabIndex={-1}>
                     {workspace === "portfolio" ? (
                         initiativeId ? <InitiativeDetail key={initiativeId} initiativeId={initiativeId} onBack={() => openWorkspace("portfolio")} onOpenThread={openThread} /> : <Initiatives onOpenInitiative={openInitiative} onOpenThread={openThread} />
                     ) : workspace === "conversations" ? (
-                        <EmailThreads key={threadId || "conversation-inbox"} initialThreadId={threadId} onOpenInitiative={openInitiative} />
+                        <EmailThreads key={threadId || "conversation-inbox"} initialThreadId={threadId} onOpenInitiative={openInitiative} onOpenThread={openThread} />
                     ) : workspace === "assessment" ? (
                         <AssessmentLab />
                     ) : (
