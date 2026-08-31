@@ -20,6 +20,7 @@ class EmailMessageResponse(BaseModel):
     subject: Optional[str]
     content_html: Optional[str]
     received_at: datetime
+    message_kind: Literal["NEW", "REPLY", "FORWARDED", "OLIVER_RESPONSE"]
 
 
 class RelatedIdeaResponse(BaseModel):

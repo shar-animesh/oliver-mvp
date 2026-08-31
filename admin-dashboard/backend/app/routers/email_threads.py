@@ -3,6 +3,7 @@
 
 """Read-only admin endpoints for Oliver email communications."""
 
+import re
 from typing import List
 from uuid import UUID
 
@@ -27,6 +28,34 @@ router = APIRouter(
     tags=["email threads"],
     dependencies=[Depends(require_admin)],
 )
+
+
+_REPLY_SUBJECT = re.compile(r"^(?:\s*\[[^\]]+\]\s*)*(?:re|reply)\s*:", re.IGNORECASE)
+_FORWARD_SUBJECT = re.compile(r"^(?:\s*\[[^\]]+\]\s*)*(?:fw|fwd|forward)\s*:", re.IGNORECASE)
+_FORWARDED_BODY = re.compile(r"(?:begin forwarded message|forwarded message|original message)", re.IGNORECASE)
+
+
+def _message_kind(message: EmailMessageDb, *, is_followup_inbound: bool = False) -> str:
+    """Classify a stored message using its direction, subject and body markers.
+
+    The dashboard does not guess from a particular pilot or email address.  The
+    Logic App currently persists the normalized subject/body, so this is a
+    deterministic fallback until provider ``In-Reply-To``/forward headers are
+    also persisted.  Outbound Oliver rows are always explicit responses.
+    """
+    if message.direction == "OUTBOUND":
+        return "OLIVER_RESPONSE"
+    subject = message.subject or ""
+    if _FORWARD_SUBJECT.search(subject):
+        return "FORWARDED"
+    if _REPLY_SUBJECT.search(subject):
+        return "REPLY"
+    body_text = re.sub(r"<[^>]+>", " ", message.content_html or "")
+    if _FORWARDED_BODY.search(body_text):
+        return "FORWARDED"
+    if is_followup_inbound:
+        return "REPLY"
+    return "NEW"
 
 
 def _canonical_messages(thread: EmailThreadDb) -> List[EmailMessageDb]:
@@ -202,6 +231,25 @@ def get_email_thread(
                 if initiative is not None:
                     break
 
+    visible_messages = _canonical_messages(thread)
+    inbound_seen = 0
+
+    def serialize_message(message: EmailMessageDb) -> EmailMessageResponse:
+        nonlocal inbound_seen
+        is_followup_inbound = message.direction == "INBOUND" and inbound_seen > 0
+        if message.direction == "INBOUND":
+            inbound_seen += 1
+        return EmailMessageResponse(
+            id=message.id,
+            direction=message.direction,
+            sender_email=message.sender_email,
+            recipient_emails=message.recipient_emails,
+            subject=message.subject,
+            content_html=message.content_html,
+            received_at=message.received_at,
+            message_kind=_message_kind(message, is_followup_inbound=is_followup_inbound),
+        )
+
     return EmailThreadDetailResponse(
         id=thread.id,
         initiative_id=initiative.id if initiative is not None else thread.initiative_id,
@@ -216,18 +264,7 @@ def get_email_thread(
         embedded_at=thread.embedded_at,
         created_at=thread.created_at,
         updated_at=thread.updated_at,
-        messages=[
-            EmailMessageResponse(
-                id=message.id,
-                direction=message.direction,
-                sender_email=message.sender_email,
-                recipient_emails=message.recipient_emails,
-                subject=message.subject,
-                content_html=message.content_html,
-                received_at=message.received_at,
-            )
-            for message in _canonical_messages(thread)
-        ],
+        messages=[serialize_message(message) for message in visible_messages],
         runs=[
             OliverRunResponse(
                 id=run.id,

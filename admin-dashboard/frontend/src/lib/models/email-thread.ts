@@ -29,6 +29,7 @@ export interface EmailMessage {
     subject: string | null;
     content_html: string | null;
     received_at: string;
+    message_kind: "NEW" | "REPLY" | "FORWARDED" | "OLIVER_RESPONSE";
 }
 
 export interface OliverRun {

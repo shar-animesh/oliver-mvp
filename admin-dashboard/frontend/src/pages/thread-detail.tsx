@@ -24,6 +24,15 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
     const scoredDimensionCount = assessment?.dimensions.filter((dimension) => dimension.value !== null).length ?? 0;
     const unknownDimensions = assessment?.dimensions.filter((dimension) => dimension.value === null).map((dimension) => dimension.dimension_label) ?? [];
 
+    function messageKindLabel(kind: EmailThreadDetail["messages"][number]["message_kind"]): string {
+        return {
+            NEW: "New email",
+            REPLY: "Reply",
+            FORWARDED: "Forwarded email",
+            OLIVER_RESPONSE: "Oliver response",
+        }[kind];
+    }
+
     function downloadHtml(content: string | null, messageId: string, subject: string | null): void {
         if (!content) return;
         const blob = new Blob([content], { type: "text/html;charset=utf-8" });
@@ -154,7 +163,9 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
                                         <div className="avatar avatar-small">{initials(message.sender_email)}</div>
                                         <div>
                                             <strong>{message.direction === "INBOUND" ? message.sender_email || "Sender" : "Oliver"}</strong>
-                                            <small>{message.direction === "INBOUND" ? "Participant" : "Oliver response"}</small>
+                                            <small>
+                                                {message.direction === "INBOUND" ? "Participant" : "Oliver response"} · {messageKindLabel(message.message_kind)}
+                                            </small>
                                         </div>
                                         <div className="message-actions">
                                             <time>{formatDate(message.received_at)}</time>

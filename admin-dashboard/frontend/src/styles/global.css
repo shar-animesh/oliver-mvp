@@ -1446,6 +1446,10 @@ main {
     font-size: 0.6rem;
 }
 
+.message-meta small {
+    letter-spacing: .01em;
+}
+
 .message-frame {
     width: 100%;
     min-height: 320px;
