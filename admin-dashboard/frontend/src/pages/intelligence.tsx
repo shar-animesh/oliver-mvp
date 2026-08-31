@@ -114,7 +114,7 @@ export default function Intelligence({ mode, onOpenInitiative, adminName }: Inte
             .sort((a, b) => Number(b.priority === "HIGH") - Number(a.priority === "HIGH")),
         [patterns, patternFilter],
     );
-    const adminFirstName = (adminName || "administrator").split(/[.@_ -]/)[0];
+    const adminFirstName = (adminName || "administrator").split(/[.@_ -]/)[0].replace(/^\w/, (letter) => letter.toUpperCase());
 
     return (
         <section className="intelligence-desk" aria-labelledby="intelligence-title">
