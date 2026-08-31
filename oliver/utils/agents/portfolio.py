@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 from typing import Literal
 from uuid import UUID
@@ -71,6 +72,7 @@ Do not instruct the administrator to apply the most advanced gate outcome, merge
 Flag conflicting evidence or decisions for governed human resolution instead.
 """.strip()
 _REPORT_CONTRACT_VERSION = "2026-08-31-admin-brief-v3"
+_RAW_IDENTIFIER_RE = re.compile(r"\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b", re.IGNORECASE)
 
 
 class PortfolioIntelligenceAgent:
@@ -138,6 +140,9 @@ class PortfolioIntelligenceAgent:
             cited = set(item.supporting_initiative_ids)
             if not cited.issubset(valid_ids) or item.evidence_count != len(cited):
                 raise RuntimeError("Portfolio report contains invalid initiative citations")
+            prose = " ".join((item.title, item.finding, item.why_it_matters, item.recommended_action))
+            if _RAW_IDENTIFIER_RE.search(prose) or any(token in prose for token in ("HOLD_FOR_EVIDENCE", "CONDITIONAL_ADVANCE", "HOLD_FOR_REVIEW")):
+                raise RuntimeError("Portfolio report exposes an internal identifier or lifecycle enum in prose")
 
     @staticmethod
     def _snapshot(database: Session) -> dict[str, object]:
