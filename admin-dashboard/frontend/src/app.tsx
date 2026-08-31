@@ -331,7 +331,7 @@ function Dashboard({ session, onSignedOut }: { session: AdminSession; onSignedOu
                     ) : workspace === "assessment" ? (
                         <AssessmentLab />
                     ) : (
-                        <Intelligence mode={workspace} onOpenInitiative={openInitiative} />
+                        <Intelligence mode={workspace} onOpenInitiative={openInitiative} adminName={session.username} />
                     )}
                 </main>
             </div>

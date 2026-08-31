@@ -61,6 +61,10 @@ UUIDs may appear only in supporting_initiative_ids. Never place UUIDs or UUID fr
 Never expose raw enum values. Translate HOLD_FOR_EVIDENCE to "more evidence required", CONDITIONAL_ADVANCE
 to "ready to advance with conditions", and ADVANCE to "ready to advance".
 Refer to pilots by their supplied titles. Explain DI stages as Concept, Pilot, Test, Implement, or Scale when needed.
+Write titles as short, readable statements that tell the administrator what is happening and why it matters.
+Prefer "11 pilots have no measurable baseline" over "Strategic value unassessable".
+Avoid abstract terms such as "portfolio signal", "structural gap", "governance ambiguity", or "execution readiness"
+unless you immediately explain them in ordinary language.
 Every signal must include:
 - category (EVIDENCE, EXECUTION, TECHNICAL, GOVERNANCE, SAFETY, DUPLICATE, or PORTFOLIO)
 - priority (HIGH only when the snapshot shows a material safety, compliance, delivery, or duplicate risk)
@@ -71,7 +75,7 @@ Avoid generic advice such as "review the initiatives". Recommendations must be a
 Do not instruct the administrator to apply the most advanced gate outcome, merge or delete records, or place a formal hold.
 Flag conflicting evidence or decisions for governed human resolution instead.
 """.strip()
-_REPORT_CONTRACT_VERSION = "2026-08-31-admin-brief-v4"
+_REPORT_CONTRACT_VERSION = "2026-08-31-admin-brief-v5"
 _RAW_IDENTIFIER_RE = re.compile(r"\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b", re.IGNORECASE)
 
 

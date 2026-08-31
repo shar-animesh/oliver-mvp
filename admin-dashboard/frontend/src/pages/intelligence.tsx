@@ -13,6 +13,7 @@ type PatternFilter = "ALL" | "HIGH" | "EVIDENCE" | "EXECUTION" | "DUPLICATE";
 interface IntelligenceProps {
     mode: IntelligenceMode;
     onOpenInitiative?: (id: string) => void;
+    adminName?: string;
 }
 
 function reportPatterns(overview: IntelligenceOverview): PortfolioPattern[] {
@@ -50,7 +51,7 @@ function cleanPatternText(value: string, initiativeNames: Map<string, string>): 
         .replaceAll("HOLD_FOR_REVIEW", "human review");
 }
 
-export default function Intelligence({ mode, onOpenInitiative }: IntelligenceProps) {
+export default function Intelligence({ mode, onOpenInitiative, adminName }: IntelligenceProps) {
     const [overview, setOverview] = useState<IntelligenceOverview | null>(null);
     const [initiatives, setInitiatives] = useState<InitiativeSummary[]>([]);
     const [loading, setLoading] = useState(true);
@@ -113,6 +114,7 @@ export default function Intelligence({ mode, onOpenInitiative }: IntelligencePro
             .sort((a, b) => Number(b.priority === "HIGH") - Number(a.priority === "HIGH")),
         [patterns, patternFilter],
     );
+    const adminFirstName = (adminName || "administrator").split(/[.@_ -]/)[0];
 
     return (
         <section className="intelligence-desk" aria-labelledby="intelligence-title">
@@ -152,7 +154,7 @@ export default function Intelligence({ mode, onOpenInitiative }: IntelligencePro
                         {overview?.latest_portfolio_insight ? (
                             <div className="intelligence-body">
                                 <div className="portfolio-pulse">
-                                    <div className="pulse-heading"><div><p className="eyebrow">Current portfolio picture</p><h4>What is happening now</h4></div><span>{assessed.length} of {initiatives.length} pilots have an assessment</span></div>
+                                    <div className="pulse-heading"><div><p className="eyebrow">Current portfolio picture</p><h4>Hi {adminFirstName} — what is happening now</h4><p className="pulse-intro">Oliver currently has {initiatives.length} registered pilot{initiatives.length === 1 ? "" : "s"} and {assessed.length} with an assessment.</p></div><span>Updated from live portfolio data</span></div>
                                     <div className="intelligence-kpis" aria-label="Current portfolio picture">
                                         <div><strong>{initiatives.length}</strong><span>Pilots in portfolio</span></div>
                                         <div><strong>{stalledCount}</strong><span>Currently stalled</span></div>

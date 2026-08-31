@@ -2564,6 +2564,14 @@ main { width: 100%; max-width: none; margin: 0; padding: 34px clamp(24px, 4vw, 5
 .unlinked-row > span:last-child { justify-items: end; }
 .unlinked-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .unlinked-row small, .unlinked-row time { color: var(--se-muted); font-size: .68rem; }
+.pilot-overview + .pilot-context { display: none; }
+.pilot-overview { margin-bottom: 18px; }
+.pilot-overview .panel-heading { align-items: center; }
+.pilot-overview-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 0 24px 20px; }
+.pilot-overview-grid > div { display: grid; gap: 4px; min-width: 0; padding: 11px 12px; border: 1px solid var(--se-line); background: #fbfcfc; }
+.pilot-overview-grid small { color: var(--se-muted); font-size: .62rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.pilot-overview-grid strong { overflow: hidden; color: var(--se-ink); text-overflow: ellipsis; white-space: nowrap; }
+.pilot-overview-grid span { color: var(--se-muted); font-size: .68rem; }
 
 .intelligence-grid, .intelligence-desk-grid { gap: 16px; }
 .intelligence-desk-grid { display: block; }
@@ -2576,6 +2584,7 @@ main { width: 100%; max-width: none; margin: 0; padding: 34px clamp(24px, 4vw, 5
 .pulse-heading h4, .pattern-toolbar h4 { margin-top: 4px; color: var(--se-ink); font-size: 1rem; }
 .toolbar-count { margin-left: 8px; color: var(--se-muted); font-size: .65rem; font-weight: 500; }
 .pulse-heading > span { color: var(--se-muted); font-size: .7rem; }
+.pulse-intro { margin-top: 5px; color: var(--se-muted); font-size: .76rem; line-height: 1.45; }
 .intelligence-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
 .intelligence-kpis > div { padding: 13px 14px; border: 1px solid var(--se-line); background: #fff; }
 .intelligence-kpis strong { display: block; color: var(--se-ink); font-size: 1.4rem; letter-spacing: -.03em; }
@@ -2595,6 +2604,9 @@ main { width: 100%; max-width: none; margin: 0; padding: 34px clamp(24px, 4vw, 5
 .pattern-filters button:hover, .pattern-filters button.selected { border-color: var(--se-blue); color: var(--se-blue); background: #eef7fa; }
 .pattern-list, .scout-desk-list { display: grid; gap: 10px; margin-top: 18px; }
 .pattern-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.conversation-summary { margin-bottom: 18px; padding: 18px 22px; border-left: 3px solid var(--se-cyan); }
+.conversation-summary h3 { margin-top: 5px; color: var(--se-ink); }
+.conversation-summary > p:last-child { max-width: 900px; margin-top: 8px; color: var(--se-ink); line-height: 1.55; }
 .pattern-card, .scout-desk-row { min-width: 0; padding: 14px 16px; border: 1px solid var(--se-line); background: #fbfcfc; }
 .pattern-card-heading, .pattern-card-title, .scout-desk-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; min-width: 0; }
 .pattern-card-title { justify-content: flex-start; align-items: center; }
@@ -2669,6 +2681,7 @@ main { width: 100%; max-width: none; margin: 0; padding: 34px clamp(24px, 4vw, 5
     .intelligence-desk-grid { grid-template-columns: 1fr; }
     .intelligence-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .pattern-card-grid { grid-template-columns: 1fr; }
+    .pilot-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .signin-layout { grid-template-columns: 1fr; }
     .signin-story { min-height: 330px; }
     .signin-panel { padding-block: 44px; }

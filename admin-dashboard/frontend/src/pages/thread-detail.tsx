@@ -51,6 +51,23 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
             : assessment.current_stage
         : "—";
 
+    const stageName = (stage: string | null): string => ({
+        DI1: "Concept",
+        DI2: "Pilot",
+        DI3: "Test",
+        DI4: "Implement",
+        DI5: "Scale",
+    }[stage || ""] || stage || "Not available");
+    const firstInbound = thread.messages.find((message) => message.direction === "INBOUND");
+    const participantEmail = firstInbound?.sender_email || thread.participant_email;
+    const participantName = (participantEmail?.split("@")[0] || "The participant")
+        .replace(/[._-]+/g, " ")
+        .replace(/(^|\s)\S/g, (letter) => letter.toUpperCase());
+    const requestSubject = (thread.subject || "this pilot idea").replace(/^(re|reply|fw|fwd):\s*/i, "");
+    const conversationSummary = assessment
+        ? participantName + " from Siemens Energy sent this on " + formatDate(firstInbound?.received_at || thread.created_at) + " about “" + requestSubject + "”. Oliver assessed it at " + (assessment.composite_score ?? "an incomplete score") + " and returned “" + formatGate(assessment.gate_outcome) + "”."
+        : participantName + " from Siemens Energy sent this on " + formatDate(firstInbound?.received_at || thread.created_at) + " about “" + requestSubject + "”. Oliver has not recorded an assessment for it yet.";
+
     return (
         <section className="detail-view" aria-labelledby="initiative-title">
             <button className="back-link" onClick={onBack}>
@@ -72,6 +89,22 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
             </div>
 
             {thread.initiative_id ? (
+                <>
+                <section className="panel pilot-overview" aria-labelledby="pilot-overview-title">
+                    <div className="panel-heading">
+                        <div>
+                            <p className="eyebrow">Pilot overview</p>
+                            <h3 id="pilot-overview-title">{thread.initiative_title || "Linked pilot"}</h3>
+                        </div>
+                        <button className="insight-action" type="button" onClick={() => onOpenInitiative(thread.initiative_id as string)}>Open Portfolio detail</button>
+                    </div>
+                    <div className="pilot-overview-grid">
+                        <div><small>Current stage</small><strong>{stageName(thread.initiative_current_stage)}</strong><span>{thread.initiative_current_stage || "—"}</span></div>
+                        <div><small>Lifecycle state</small><strong>{thread.initiative_lifecycle_state || "Not available"}</strong></div>
+                        <div><small>Latest score</small><strong>{assessment?.composite_score ?? (assessment ? "Incomplete" : "—")}</strong><span>{assessment?.rating || "Not assessed"}</span></div>
+                        <div><small>Gate outcome</small><strong>{assessment ? formatGate(assessment.gate_outcome) : "Not assessed"}</strong><span>{assessment ? scoredDimensionCount + "/" + assessment.dimensions.length + " dimensions scored" : "No assessment recorded"}</span></div>
+                    </div>
+                </section>
                 <button className="pilot-context" type="button" onClick={() => onOpenInitiative(thread.initiative_id as string)}>
                     <span>
                         <small>Linked pilot</small>
@@ -81,6 +114,7 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
                         {thread.initiative_current_stage || "Stage unavailable"} · {thread.initiative_lifecycle_state || "State unavailable"} <span aria-hidden="true">→</span>
                     </span>
                 </button>
+                </>
             ) : (
                 <div className="pilot-context pilot-context-unlinked">
                     <span>
@@ -89,6 +123,12 @@ export default function ThreadDetail({ thread, onBack, onOpenRelated, onOpenInit
                     </span>
                 </div>
             )}
+
+            <section className="panel conversation-summary" aria-labelledby="conversation-summary-title">
+                <p className="eyebrow">Conversation summary</p>
+                <h3 id="conversation-summary-title">What this conversation means</h3>
+                <p>{conversationSummary}</p>
+            </section>
 
             <div className="detail-grid">
                 <div className="detail-main">
