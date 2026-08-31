@@ -38,6 +38,28 @@ class Registrar:
             return initiative
 
         title = _SUBJECT_PREFIX.sub("", (thread.subject or "").strip()) or "Untitled initiative"
+
+        # A reply can arrive in a new connector conversation when Graph loses
+        # the original conversation ID. If this thread already contains an
+        # Oliver response, reuse the matching canonical pilot instead of
+        # creating a second initiative with the same subject and owner.
+        if thread.participant_email and any(message.direction == "OUTBOUND" for message in thread.messages):
+            normalized_title = " ".join(title.split()).casefold()
+            candidates = database.scalars(
+                select(InitiativeDb).where(InitiativeDb.owner_email == thread.participant_email)
+            ).all()
+            matching = next(
+                (
+                    candidate
+                    for candidate in sorted(candidates, key=lambda item: (item.updated_at, item.id), reverse=True)
+                    if " ".join(candidate.title.split()).casefold() == normalized_title
+                ),
+                None,
+            )
+            if matching is not None:
+                thread.initiative_id = matching.id
+                return matching
+
         initiative = InitiativeDb(title=title[:200], owner_email=thread.participant_email)
         database.add(initiative)
         database.flush()

@@ -56,3 +56,18 @@ def test_same_id_is_a_replay_even_if_provider_reformats_body() -> None:
         content_html="<p>Different body.</p>",
         received_at=datetime(2026, 8, 30, 12, 30, tzinfo=timezone.utc),
     )
+
+
+def test_retry_with_changed_outlook_quote_markup_matches_authored_text() -> None:
+    existing = _message(
+        subject="Re: Pilot update",
+        content_html="<p>Added the baseline and owner.</p><p>From: Oliver &lt;oliver@example.test&gt;</p><p>old report</p>",
+    )
+    assert _is_replayed_message(
+        existing,
+        message_id="connector-item-44",
+        sender_email="owner@example.test",
+        subject="RE: Pilot update",
+        content_html="<div>Added the baseline and owner.</div><blockquote><p>From: Oliver</p><p>new tracking markup</p></blockquote>",
+        received_at=existing.received_at + timedelta(seconds=4),
+    )

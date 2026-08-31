@@ -12,6 +12,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.security import require_admin
+from app.utils.email_content import current_message_text, html_to_text
 from app.utils.models.api import (
     CanonicalAssessmentResponse,
     DimensionScoreResponse,
@@ -56,6 +57,33 @@ def _message_kind(message: EmailMessageDb, *, is_followup_inbound: bool = False)
     if is_followup_inbound:
         return "REPLY"
     return "NEW"
+
+
+def _display_content(message: EmailMessageDb) -> str | None:
+    """Hide quoted mail history while retaining the original body in storage.
+
+    Outlook places the previous Oliver HTML response inside a participant's
+    reply. Rendering the raw body made that quoted response look like a second
+    Oliver decision in the dashboard. The ingestion record remains unchanged;
+    this is only the reader-facing projection.
+    """
+    content = message.content_html
+    if not content or message.direction != "INBOUND":
+        return content
+    full_text = html_to_text(content)
+    authored_text = current_message_text(content)
+    if not authored_text:
+        return "<p><em>No new participant text; quoted message history is hidden.</em></p>"
+    if authored_text == full_text:
+        return content
+    escaped = (
+        authored_text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("\n", "<br>")
+    )
+    return f"<div>{escaped}</div><p><em>Quoted message history hidden.</em></p>"
 
 
 def _canonical_messages(thread: EmailThreadDb) -> List[EmailMessageDb]:
@@ -245,7 +273,7 @@ def get_email_thread(
             sender_email=message.sender_email,
             recipient_emails=message.recipient_emails,
             subject=message.subject,
-            content_html=message.content_html,
+            content_html=_display_content(message),
             received_at=message.received_at,
             message_kind=_message_kind(message, is_followup_inbound=is_followup_inbound),
         )

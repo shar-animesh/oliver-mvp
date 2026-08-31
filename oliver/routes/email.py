@@ -23,7 +23,7 @@ from utils.agents import (
     render_coach_response,
 )
 from utils.attachments import AttachmentService, AttachmentValidationError, AzureBlobAttachmentStore, FileSystemAttachmentStore
-from utils.email_content import html_to_text
+from utils.email_content import current_message_text, html_to_text
 from utils.herald import Herald
 from utils.lifecycle import StageMaster
 from utils.model_provider import get_model_client
@@ -53,6 +53,54 @@ def _canonical_message_id(value: str) -> str:
 
 def _normalized_header(value: str | None) -> str:
     return " ".join((value or "").split()).casefold()
+
+
+_REPLY_SUBJECT = re.compile(r"^(?:(?:re|reply)\s*:\s*)+", re.IGNORECASE)
+_FORWARD_SUBJECT = re.compile(r"^(?:(?:fw|fwd|forward)\s*:\s*)+", re.IGNORECASE)
+
+
+def _normalized_subject(value: str | None) -> str:
+    """Compare subjects independently of the prefixes added by mail clients."""
+    subject = (value or "").strip()
+    previous = None
+    while subject and subject != previous:
+        previous = subject
+        subject = _REPLY_SUBJECT.sub("", subject).strip()
+        subject = _FORWARD_SUBJECT.sub("", subject).strip()
+    return _normalized_header(subject)
+
+
+def _looks_like_reply(request: EmailResponseRequest) -> bool:
+    """Identify a reply even when the connector supplies a new conversation ID."""
+    if _REPLY_SUBJECT.search(request.subject or ""):
+        return True
+    body = html_to_text(request.email_thread)
+    authored = current_message_text(request.email_thread)
+    if authored and _normalized_header(authored) != _normalized_header(body):
+        return True
+    return bool(re.search(r"(?:original message|forwarded message|on .+ wrote:|^from:\s)", body, re.IGNORECASE | re.MULTILINE))
+
+
+def _find_existing_reply_thread(database: Session, request: EmailResponseRequest) -> EmailThreadDb | None:
+    """Resolve a reply to its existing thread when Graph's conversation ID changes.
+
+    Microsoft connectors normally preserve ``conversationId``. Some flows instead
+    provide an item-scoped ID for replies. A normalized subject/participant match
+    is used only for messages that contain reply/quoted-history markers and only
+    against threads that already have an Oliver outbound response.
+    """
+    if not _looks_like_reply(request):
+        return None
+    candidates = database.scalars(
+        select(EmailThreadDb).where(EmailThreadDb.participant_email.ilike(request.sender_email or ""))
+    ).all()
+    for candidate in sorted(candidates, key=lambda item: (item.updated_at, item.id), reverse=True):
+        if _normalized_subject(candidate.subject) != _normalized_subject(request.subject):
+            continue
+        has_oliver_response = any(message.direction == "OUTBOUND" for message in candidate.messages)
+        if has_oliver_response:
+            return candidate
+    return None
 
 
 def _participant_display_name(sender_email: str | None, sender_name: str | None = None) -> str | None:
@@ -85,10 +133,11 @@ def _is_replayed_message(
 
     Outlook/Logic App retries normally preserve ``internetMessageId``.  Some
     connectors fall back to a per-item ID, though, which previously created a
-    second Oliver run for the same message.  An exact content/header/timestamp
-    match is a safe secondary key for that case.  A genuinely new email should
-    have its own stable provider ID; suppressing an ID-less replay is preferable
-    to creating a second assessment and outbound reply.
+    second Oliver run for the same message. A normalized
+    sender/subject/authored-body match is a safe secondary key for that case.
+    A genuinely new email should have its own stable provider ID; suppressing
+    an ID-less replay is preferable to creating a second assessment and
+    outbound reply.
     """
     if _canonical_message_id(existing.internet_message_id) == _canonical_message_id(message_id):
         return True
@@ -96,9 +145,13 @@ def _is_replayed_message(
         return False
     if _normalized_header(existing.sender_email) != _normalized_header(sender_email):
         return False
-    if _normalized_header(existing.subject) != _normalized_header(subject):
+    if _normalized_subject(existing.subject) != _normalized_subject(subject):
         return False
-    if " ".join(html_to_text(existing.content_html or "").split()).casefold() != " ".join(html_to_text(content_html).split()).casefold():
+    # Outlook replies frequently include a quoted copy of Oliver's previous
+    # HTML response. Compare only the sender-authored portion so connector
+    # retries remain idempotent even when quote markup or tracking wrappers
+    # change between attempts.
+    if _normalized_header(current_message_text(existing.content_html or "")) != _normalized_header(current_message_text(content_html)):
         return False
     return True
 
@@ -172,6 +225,8 @@ def respond_to_email(
     else:
         inbound_message = None
         thread = db.scalar(select(EmailThreadDb).where(EmailThreadDb.conversation_id == request.conversation_id))
+        if thread is None:
+            thread = _find_existing_reply_thread(db, request)
         if thread is None:
             thread = EmailThreadDb(
                 conversation_id=request.conversation_id,
@@ -283,11 +338,22 @@ def respond_to_email(
                 message.sender_email,
                 request.sender_name if message.id == inbound_message.id else None,
             )
+            content = message.content_html or ""
+            if message.direction == "INBOUND":
+                full_text = html_to_text(content)
+                authored_text = current_message_text(content)
+                if authored_text and _normalized_header(authored_text) != _normalized_header(full_text):
+                    # Keep quoted Oliver HTML out of the Coach context. The
+                    # original message is retained for audit and exposed in
+                    # the admin UI as a collapsed/hidden quote.
+                    content = f"<p>{escape(authored_text)}</p>"
+                elif not authored_text and full_text:
+                    content = "<p>(No new participant text; quoted history omitted.)</p>"
             return (
                 f'<email direction="{message.direction}" sender="{escape(message.sender_email or "unknown", quote=True)}" '
                 f'participant-name="{escape(participant_name or "", quote=True)}" '
                 f'received-at="{message.received_at.isoformat()}">\n'
-                f"{message.content_html or ''}\n"
+                f"{content}\n"
                 "</email>"
             )
 
@@ -297,11 +363,12 @@ def respond_to_email(
         for message in messages:
             if message.direction != "INBOUND":
                 continue
+            authored_text = current_message_text(message.content_html or "")
             inbound_idea_transcript.append(
                 f"Sender: {message.sender_email or 'unknown'}\n"
                 f"Subject: {message.subject or 'unknown'}\n"
                 f"Received: {message.received_at.isoformat()}\n"
-                f"Content:\n{html_to_text(message.content_html or '')}"
+                f"Content:\n{authored_text}"
             )
 
         thread.semantic_text = "\n\n".join(inbound_idea_transcript)
