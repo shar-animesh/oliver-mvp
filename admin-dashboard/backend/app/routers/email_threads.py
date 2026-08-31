@@ -29,6 +29,43 @@ router = APIRouter(
 )
 
 
+def _canonical_messages(thread: EmailThreadDb) -> List[EmailMessageDb]:
+    """Return one visible outbound message per inbound message.
+
+    Historical connector retries can leave several Oliver outbound rows for the
+    same inbound message even though only one delivery reached Outlook. Keep
+    the full run audit separately, but avoid presenting retry artifacts as
+    multiple conversation replies in the admin UI.
+    """
+    inbound_messages: List[EmailMessageDb] = []
+    unmatched_outbound: List[EmailMessageDb] = []
+    outbound_by_inbound: dict[UUID, EmailMessageDb] = {}
+    runs_by_id = {run.id: run for run in thread.runs}
+
+    for message in thread.messages:
+        if message.direction != "OUTBOUND" or not message.internet_message_id.startswith("oliver-run:"):
+            if message.direction == "INBOUND":
+                inbound_messages.append(message)
+            else:
+                unmatched_outbound.append(message)
+            continue
+        try:
+            run_id = UUID(message.internet_message_id.removeprefix("oliver-run:"))
+        except ValueError:
+            unmatched_outbound.append(message)
+            continue
+        run = runs_by_id.get(run_id)
+        if run is None:
+            unmatched_outbound.append(message)
+            continue
+        previous = outbound_by_inbound.get(run.inbound_message_id)
+        if previous is None or (message.received_at, message.id) > (previous.received_at, previous.id):
+            outbound_by_inbound[run.inbound_message_id] = message
+
+    visible = [*inbound_messages, *outbound_by_inbound.values(), *unmatched_outbound]
+    return sorted(visible, key=lambda message: (message.received_at, message.id))
+
+
 @router.get("", response_model=List[EmailThreadSummaryResponse])
 def list_email_threads(database: Session = Depends(get_db)) -> List[EmailThreadSummaryResponse]:  # noqa: B008
     """List email threads by latest activity."""
@@ -189,7 +226,7 @@ def get_email_thread(
                 content_html=message.content_html,
                 received_at=message.received_at,
             )
-            for message in thread.messages
+            for message in _canonical_messages(thread)
         ],
         runs=[
             OliverRunResponse(
