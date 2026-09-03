@@ -2,7 +2,7 @@
 
 import time
 import tomllib
-from typing import Callable
+from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -29,10 +29,10 @@ app = FastAPI(
 )
 
 
-class CustomMiddleware(BaseHTTPMiddleware):
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Add request correlation, timing headers, and completion logs."""
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         request_id = request_context.set_request_context(endpoint=request.url.path, method=request.method)
         try:
             started_at = time.perf_counter()
@@ -47,5 +47,5 @@ class CustomMiddleware(BaseHTTPMiddleware):
             request_context.clear_request_context()
 
 
-app.add_middleware(CustomMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
 app.include_router(main_router)

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from utils.model_provider import parse_structured_output, structured_text_config
 from utils.models import AssessmentReport, OliverResponse
 from utils.postgres import EmailThreadDb
-from utils.prompts import build_system_prompt
+from utils.prompts import build_system_prompt, coach_request_prompt
 from utils.scoring.models import CanonicalAssessment
 from utils.templates import render_assessment_email, render_oliver_email
 from utils.tools.tool_handlers import handle_tool_call
@@ -65,7 +65,7 @@ class CoachAgent:
         input_items: list[Any] = [
             {
                 "role": "user",
-                "content": "Resolve the latest inbound message in the supplied email thread.",
+                "content": coach_request_prompt(),
             }
         ]
         related_threads: dict[UUID, tuple[EmailThreadDb, float]] = {}

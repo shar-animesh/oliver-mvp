@@ -91,9 +91,7 @@ def _find_existing_reply_thread(database: Session, request: EmailResponseRequest
     """
     if not _looks_like_reply(request):
         return None
-    candidates = database.scalars(
-        select(EmailThreadDb).where(EmailThreadDb.participant_email.ilike(request.sender_email or ""))
-    ).all()
+    candidates = database.scalars(select(EmailThreadDb).where(EmailThreadDb.participant_email.ilike(request.sender_email or ""))).all()
     for candidate in sorted(candidates, key=lambda item: (item.updated_at, item.id), reverse=True):
         if _normalized_subject(candidate.subject) != _normalized_subject(request.subject):
             continue

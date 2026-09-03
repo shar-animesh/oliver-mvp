@@ -1,14 +1,14 @@
 # Path: utils/prompts/loader.py
-# Description: Build the single Oliver system prompt.
+# Description: Load Oliver's model prompts.
 
+from functools import lru_cache
 from typing import Optional
 
 from jinja2 import Environment, PackageLoader, StrictUndefined
 
 _environment = Environment(
-    # Locate the prompts directory inside the installed utils Python package.
-    # This works both from the repository and after installing a wheel, without
-    # depending on a machine-specific filesystem path.
+    # Locate prompts relative to the utils package without depending on a
+    # machine-specific filesystem path.
     loader=PackageLoader("utils", "prompts"),
     # The rendered result is a plain-text model prompt, not an HTML document.
     # Disabling autoescaping preserves characters in the email thread exactly
@@ -29,9 +29,34 @@ _environment = Environment(
 )
 
 
+@lru_cache
+def _static_prompt(template_name: str) -> str:
+    return _environment.get_template(template_name).render().strip()
+
+
 def build_system_prompt(email_thread: str, canonical_assessment: Optional[str] = None) -> str:
     """Build the system prompt with the thread and any verified scoring result."""
     return _environment.get_template("system-prompt.jinja2").render(
         canonical_assessment=canonical_assessment,
         email_thread=email_thread,
     )
+
+
+def assessment_agent_prompt() -> str:
+    """Return the Assessment Agent's evidence-interpretation instructions."""
+    return _static_prompt("assessment-agent-prompt.jinja2")
+
+
+def portfolio_agent_prompt() -> str:
+    """Return the Portfolio Agent's verified-snapshot instructions."""
+    return _static_prompt("portfolio-agent-prompt.jinja2")
+
+
+def scout_agent_prompt() -> str:
+    """Return the Scout Agent's candidate-classification instructions."""
+    return _static_prompt("scout-agent-prompt.jinja2")
+
+
+def coach_request_prompt() -> str:
+    """Return the user message that starts a Coach model turn."""
+    return _static_prompt("coach-request-prompt.jinja2")

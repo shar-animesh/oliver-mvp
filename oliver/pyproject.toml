@@ -25,34 +25,13 @@ dependencies = [
     "uvicorn[standard]>=0.35,<1.0",
 ]
 
-[tool.poetry]
-packages = [
-    { include = "routes" },
-    { include = "utils" },
-]
-include = [
-    { path = "main.py", format = ["sdist", "wheel"] },
-    { path = "config.py", format = ["sdist", "wheel"] },
-    { path = "logger.py", format = ["sdist", "wheel"] },
-    { path = "utils/prompts/system-prompt.jinja2", format = ["sdist", "wheel"] },
-    { path = "utils/templates/*.jinja2.html", format = ["sdist", "wheel"] },
-    { path = "utils/templates/assets/*.b64", format = ["sdist", "wheel"] },
-    { path = "utils/scoring/data/*.json", format = ["sdist", "wheel"] },
-]
+[tool.uv]
+package = false
 
 [dependency-groups]
 dev = [
     "httpx>=0.28,<1.0",
     "ipykernel>=7.3,<8.0",
     "pre-commit>=4.3,<5.0",
-    "pytest>=8.4,<9.0",
     "ruff>=0.12,<1.0",
 ]
-
-[tool.pytest.ini_options]
-pythonpath = ["."]
-testpaths = ["tests"]
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"

@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from utils.audit import Auditor
 from utils.model_provider import parse_structured_output, structured_text_config
 from utils.postgres import CanonicalAssessmentDb, InitiativeDb, LifecycleTransitionDb, PortfolioInsightReportDb
+from utils.prompts import portfolio_agent_prompt
 
 
 class PortfolioPattern(BaseModel):
@@ -51,34 +52,6 @@ class PortfolioAgentResult:
     reused: bool
 
 
-_INSTRUCTIONS = """
-You are Oliver's Portfolio Intelligence Agent. Analyze only the supplied verified JSON snapshot.
-Do not infer facts, financial values, delivery status, business units, or relationships that are not present.
-Every pattern, blocker, and duplicate group must cite the exact initiative IDs that support it.
-Set evidence_count to the number of distinct supporting_initiative_ids. Do not treat similar stages alone as duplication.
-Use plain language for an operations administrator. Return 4-6 high-value signals, not a catalogue.
-The executive_summary must be four to six short, reader-friendly sentences:
-explain what is currently in the portfolio, the strongest evidence-backed
-pattern, what that means operationally, and the next administrator action.
-Use ordinary business language and do not repeat a catalogue of pilot IDs.
-UUIDs may appear only in supporting_initiative_ids. Never place UUIDs or UUID fragments in any prose field.
-Never expose raw enum values. Translate HOLD_FOR_EVIDENCE to "more evidence required", CONDITIONAL_ADVANCE
-to "ready to advance with conditions", and ADVANCE to "ready to advance".
-Refer to pilots by their supplied titles. Explain DI stages as Concept, Pilot, Test, Implement, or Scale when needed.
-Write titles as short, readable statements that tell the administrator what is happening and why it matters.
-Prefer "11 pilots have no measurable baseline" over "Strategic value unassessable".
-Avoid abstract terms such as "portfolio signal", "structural gap", "governance ambiguity", or "execution readiness"
-unless you immediately explain them in ordinary language.
-Every signal must include:
-- category (EVIDENCE, EXECUTION, TECHNICAL, GOVERNANCE, SAFETY, DUPLICATE, or PORTFOLIO)
-- priority (HIGH only when the snapshot shows a material safety, compliance, delivery, or duplicate risk)
-- a concrete finding of at most two short sentences using counts, dimensions, stages, titles, or metrics from the snapshot
-- why_it_matters: one short sentence explaining the operational consequence
-- recommended_action: one specific, verifiable next step for an administrator
-Avoid generic advice such as "review the initiatives". Recommendations must be actions justified by the snapshot, not lifecycle decisions.
-Do not instruct the administrator to apply the most advanced gate outcome, merge or delete records, or place a formal hold.
-Flag conflicting evidence or decisions for governed human resolution instead.
-""".strip()
 _REPORT_CONTRACT_VERSION = "2026-08-31-admin-brief-v5"
 _RAW_IDENTIFIER_RE = re.compile(r"\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b", re.IGNORECASE)
 
@@ -112,7 +85,7 @@ class PortfolioIntelligenceAgent:
 
         response = self._client.responses.create(
             model=self._model,
-            instructions=_INSTRUCTIONS,
+            instructions=portfolio_agent_prompt(),
             input=[{"role": "user", "content": serialized}],
             text=structured_text_config(PortfolioInsightReport),
             reasoning={"effort": self._reasoning_effort},
@@ -168,8 +141,10 @@ class PortfolioIntelligenceAgent:
                 raise RuntimeError("Portfolio report contains invalid initiative citations")
             prose = " ".join((item.title, item.finding, item.why_it_matters, item.recommended_action))
             cited_prefixes = tuple(str(identifier).split("-", 1)[0].lower() for identifier in cited)
-            if _RAW_IDENTIFIER_RE.search(prose) or any(prefix and prefix in prose.lower() for prefix in cited_prefixes) or any(
-                token in prose for token in ("HOLD_FOR_EVIDENCE", "CONDITIONAL_ADVANCE", "HOLD_FOR_REVIEW")
+            if (
+                _RAW_IDENTIFIER_RE.search(prose)
+                or any(prefix and prefix in prose.lower() for prefix in cited_prefixes)
+                or any(token in prose for token in ("HOLD_FOR_EVIDENCE", "CONDITIONAL_ADVANCE", "HOLD_FOR_REVIEW"))
             ):
                 raise RuntimeError("Portfolio report exposes an internal identifier or lifecycle enum in prose")
 

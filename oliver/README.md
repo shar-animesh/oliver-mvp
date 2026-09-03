@@ -75,6 +75,8 @@ system_prompt = build_system_prompt(email_thread)
 
 `render_oliver_email` sanitizes the model-generated fragment with a strict Bleach tag, attribute, and protocol allowlist before inserting it into an autoescaped `.jinja2.html` shell. The subject and preheader remain escaped. The official white Siemens Energy logo is packaged locally and embedded into each rendered email as a base64 PNG data URI, so rendering does not request an external image.
 
+All model prompts live in `utils/prompts`. The loader exposes named functions for the Coach, Assessment, Portfolio, and Scout instructions, so prompt changes do not require editing agent code.
+
 ```python
 from utils.templates import render_oliver_email
 
@@ -88,15 +90,13 @@ The shell fixes only the brand frame: the official logo, dark-purple/violet colo
 
 ## Development
 
-The project uses Poetry Core and uv:
+The application uses uv for dependency management and local commands:
 
 ```bash
 uv lock
 uv sync
 uv run ruff check .
 uv run ruff format --check .
-uvx poetry check
-uvx poetry build
 ```
 
 ## Local PostgreSQL

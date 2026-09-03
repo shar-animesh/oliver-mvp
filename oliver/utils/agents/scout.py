@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from utils.audit import Auditor
 from utils.model_provider import parse_structured_output, structured_text_config
 from utils.postgres import EvidenceItemDb, EvidenceVersionDb, EvidenceVersionItemDb, InitiativeDb, ScoutCandidateDb
+from utils.prompts import scout_agent_prompt
 
 
 class ScoutSourceRecord(BaseModel):
@@ -59,16 +60,6 @@ class ScoutAgentResult:
     created_count: int
 
 
-_INSTRUCTIONS = """
-You are Oliver's Scout Agent. Review only the supplied records from an approved internal source.
-Mark is_candidate true only when a record describes a concrete AI-enabled initiative or a credible unmet need where AI is explicitly proposed.
-Do not invent owners, evidence, savings, stage, score, or implementation status.
-Copy source_reference exactly. Summarize the concrete problem and intended outcome. Confidence measures classification certainty only.
-Scout discovers candidates; it never approves, scores, promotes, or creates lifecycle decisions.
-Return exactly one finding for every supplied record.
-""".strip()
-
-
 class ScoutAgent:
     """Classify approved-source records into a deduplicated review queue."""
 
@@ -99,7 +90,7 @@ class ScoutAgent:
         }
         response = self._client.responses.create(
             model=self._model,
-            instructions=_INSTRUCTIONS,
+            instructions=scout_agent_prompt(),
             input=[{"role": "user", "content": json.dumps(source_payload, sort_keys=True)}],
             text=structured_text_config(ScoutFindings),
             reasoning={"effort": self._reasoning_effort},

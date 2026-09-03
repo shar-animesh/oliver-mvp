@@ -45,9 +45,7 @@ class Registrar:
         # creating a second initiative with the same subject and owner.
         if thread.participant_email and any(message.direction == "OUTBOUND" for message in thread.messages):
             normalized_title = " ".join(title.split()).casefold()
-            candidates = database.scalars(
-                select(InitiativeDb).where(InitiativeDb.owner_email == thread.participant_email)
-            ).all()
+            candidates = database.scalars(select(InitiativeDb).where(InitiativeDb.owner_email == thread.participant_email)).all()
             matching = next(
                 (
                     candidate
