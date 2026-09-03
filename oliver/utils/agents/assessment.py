@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
@@ -18,32 +17,12 @@ from utils.model_provider import (
     parse_structured_output,
     structured_text_config,
 )
-from utils.prompts import assessment_agent_prompt
+from utils.prompts import assessment_agent_prompt, assessment_router_prompt
 from utils.scoring import CanonicalAssessment, DimensionScore, DIStage, assess_email, consolidate_dimensions
 from utils.scoring.exceptions import UnassessableEmailError
 from utils.scoring.service import DIMENSION_METADATA
 from utils.scoring.weights import DIMENSIONS
 from utils.transition_policy import CriterionFinding, active_transition_policy_set, policy_for_stage, terminal_policy_for_stage
-
-_EXPLICIT_ASSESSMENT = re.compile(r"\b(?:assess|assessment|evaluate|evaluation|reassess|re-assess|score|review my idea)\b", re.IGNORECASE)
-_AI_SIGNAL = re.compile(
-    r"\b(?:AI|artificial intelligence|machine learning|ML|LLM|GenAI|NLP|RAG|computer vision|anomaly detection|forecasting|predictive)\b",
-    re.IGNORECASE,
-)
-_INITIATIVE_SIGNAL = re.compile(
-    r"\b(?:idea|initiative|proposal|pilot|proof[- ]of[- ]concept|PoC|we\s+(?:want|plan|propose|intend|will|should)|"
-    r"(?:use|using|build|develop|implement|apply|automate|predict|detect|classify|forecast|extract|recommend)\b)",
-    re.IGNORECASE,
-)
-_NEW_EVIDENCE = re.compile(
-    r"\b(?:new evidence|updated|attached|tested|testing|pilot(?:ed)?|result(?:s)?|achieved|accuracy|baseline|measured|"
-    r"validated|completed|data (?:is|are|was|were|has|have)|reduced|increased|improved|confirmed)\b",
-    re.IGNORECASE,
-)
-_SHORT_CONVERSATION = re.compile(
-    r"^\s*(?:thanks|thank you|hello|hi|please explain|can you (?:explain|clarify)|what do you mean|any update|status update)\b",
-    re.IGNORECASE,
-)
 
 
 @dataclass(frozen=True)
@@ -58,20 +37,51 @@ class AssessmentRequest:
     current_stage: DIStage = DIStage.DI1
 
 
-def _should_assess(request: AssessmentRequest) -> bool:
+class AssessmentRouting(BaseModel):
+    """LLM decision on whether an email warrants canonical assessment."""
+
+    should_assess: bool
+
+
+def _should_assess_with_model(
+    client: OpenAI,
+    *,
+    model: str,
+    reasoning_effort: str,
+    request_timeout_seconds: float,
+    response_retries: int,
+    request: AssessmentRequest,
+) -> bool:
     latest_text = current_message_text(request.latest_message_html)
-    subject_and_body = f"{request.subject or ''}\n{latest_text}"
-    if _EXPLICIT_ASSESSMENT.search(latest_text):
-        return True
-    if request.has_previous_assessment:
-        return bool(_NEW_EVIDENCE.search(latest_text))
-    if _EXPLICIT_ASSESSMENT.search(request.subject or ""):
-        return True
-    if len(latest_text) < 20:
+    if not latest_text.strip():
         return False
-    if _SHORT_CONVERSATION.search(latest_text) and len(latest_text) < 160:
-        return False
-    return bool(_AI_SIGNAL.search(subject_and_body) and _INITIATIVE_SIGNAL.search(subject_and_body))
+    payload = {
+        "subject": request.subject or "(no subject)",
+        "latest_message": latest_text,
+        "has_previous_assessment": request.has_previous_assessment,
+        "current_stage": request.current_stage.value,
+        "attachment_count": len(request.attachment_texts),
+    }
+
+    def classify(remaining_seconds: float) -> AssessmentRouting:
+        response = client.responses.create(
+            model=model,
+            instructions=assessment_router_prompt(),
+            input=[{"role": "user", "content": json.dumps(payload, ensure_ascii=False)}],
+            text=structured_text_config(AssessmentRouting),
+            reasoning={"effort": reasoning_effort},
+            store=False,
+            timeout=min(request_timeout_seconds, remaining_seconds),
+        )
+        return parse_structured_output(response, AssessmentRouting)
+
+    result = call_with_bounded_provider_retry(
+        classify,
+        timeout_seconds=request_timeout_seconds * (response_retries + 1),
+        max_retries=response_retries,
+        retryable_result_errors=(StructuredOutputError,),
+    )
+    return result.should_assess
 
 
 def _accumulated_evidence(message_html: tuple[str, ...], attachment_texts: tuple[str, ...]) -> str:
@@ -101,10 +111,32 @@ class AssessmentAgent(Protocol):
 
 
 class RubricAssessmentAgent:
-    """Offline fallback evaluator using the deterministic evidence rubric."""
+    """Use an LLM to route messages before applying the deterministic rubric."""
+
+    def __init__(
+        self,
+        *,
+        client: OpenAI,
+        model: str,
+        reasoning_effort: str,
+        request_timeout_seconds: float,
+        response_retries: int,
+    ) -> None:
+        self._client = client
+        self._model = model
+        self._reasoning_effort = reasoning_effort
+        self._request_timeout_seconds = request_timeout_seconds
+        self._response_retries = response_retries
 
     def assess(self, request: AssessmentRequest) -> CanonicalAssessment | None:
-        if not _should_assess(request):
+        if not _should_assess_with_model(
+            self._client,
+            model=self._model,
+            reasoning_effort=self._reasoning_effort,
+            request_timeout_seconds=self._request_timeout_seconds,
+            response_retries=self._response_retries,
+            request=request,
+        ):
             return None
         evidence = _accumulated_evidence(request.inbound_messages_html, request.attachment_texts)
         try:
@@ -198,7 +230,14 @@ class EvidenceAssessmentAgent:
         self._response_retries = response_retries
 
     def assess(self, request: AssessmentRequest) -> CanonicalAssessment | None:
-        if not _should_assess(request):
+        if not _should_assess_with_model(
+            self._client,
+            model=self._model,
+            reasoning_effort=self._reasoning_effort,
+            request_timeout_seconds=self._request_timeout_seconds,
+            response_retries=self._response_retries,
+            request=request,
+        ):
             return None
         evidence = _accumulated_evidence(request.inbound_messages_html, request.attachment_texts)
         if len(evidence.strip()) < 10:
@@ -295,7 +334,13 @@ def build_assessment_agent(
 ) -> AssessmentAgent:
     """Construct the configured evaluator from one shared composition boundary."""
     if mode == "rubric":
-        return RubricAssessmentAgent()
+        return RubricAssessmentAgent(
+            client=client,
+            model=model,
+            reasoning_effort=reasoning_effort,
+            request_timeout_seconds=request_timeout_seconds,
+            response_retries=response_retries,
+        )
     return EvidenceAssessmentAgent(
         client=client,
         model=model,

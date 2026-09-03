@@ -47,6 +47,11 @@ def assessment_agent_prompt() -> str:
     return _static_prompt("assessment-agent-prompt.jinja2")
 
 
+def assessment_router_prompt() -> str:
+    """Return the classifier instructions for deciding whether to assess an email."""
+    return _static_prompt("assessment-router-prompt.jinja2")
+
+
 def portfolio_agent_prompt() -> str:
     """Return the Portfolio Agent's verified-snapshot instructions."""
     return _static_prompt("portfolio-agent-prompt.jinja2")
